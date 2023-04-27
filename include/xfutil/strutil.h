@@ -32,6 +32,14 @@ static inline byte_t* xmalloc(size_t size)
 {
 	return (byte_t*)malloc(size);
 }
+static inline byte_t* xmalloc(size_t size, size_t align)
+{
+    assert((size & (size-1)) == 0);
+    assert((align & (align-1)) == 0);
+    
+    void* buf;
+	return (posix_memalign(&buf, align, size) == 0) ? (byte_t*)buf : nullptr;
+}
 static inline void xfree(void* ptr)
 {
 	free(ptr);

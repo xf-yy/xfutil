@@ -18,7 +18,9 @@ limitations under the License.
 #define __xfutil_xfutil_h__
 
 #include "xfutil/types.h"
+#include "xfutil/list.h"
 #include "xfutil/block_pool.h"
+#include "xfutil/memory_pool.h"
 #include "xfutil/bloom_filter.h"
 #include "xfutil/buffer.h"
 #include "xfutil/coding.h"

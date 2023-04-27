@@ -41,11 +41,7 @@ struct LogData
 class LoggerImpl
 {
 public:
-	LoggerImpl()
-	{
-        m_filesize = 0;
-        m_started = false;
-	}
+	LoggerImpl();
     ~LoggerImpl()
     {
         Close();

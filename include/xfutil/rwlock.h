@@ -32,30 +32,30 @@ static inline bool rwlock_destroy(rwlock_t* lock)
 {
 	return (pthread_rwlock_destroy(lock) == 0);
 }
-static inline bool read_lock(rwlock_t* lock)
+static inline bool rwlock_readlock(rwlock_t* lock)
 {
 	return (pthread_rwlock_rdlock(lock) == 0);
 }
-static inline bool read_trylock(rwlock_t* lock)
+static inline bool rwlock_try_readlock(rwlock_t* lock)
 {
 	return (pthread_rwlock_tryrdlock(lock) == 0);
 }
 
-static inline bool read_unlock(rwlock_t* lock)
+static inline bool rwlock_read_unlock(rwlock_t* lock)
 {
 	return (pthread_rwlock_unlock(lock) == 0);
 }
 
-static inline bool write_lock(rwlock_t* lock)
+static inline bool rwlock_writelock(rwlock_t* lock)
 {
 	return (pthread_rwlock_wrlock(lock) == 0);
 }
-static inline bool write_trylock(rwlock_t* lock)
+static inline bool rwlock_try_writelock(rwlock_t* lock)
 {
 	return (pthread_rwlock_trywrlock(lock) == 0);
 }
 
-static inline bool write_unlock(rwlock_t* lock)
+static inline bool rwlock_write_unlock(rwlock_t* lock)
 {
 	return (pthread_rwlock_unlock(lock) == 0);
 }
@@ -82,20 +82,20 @@ public:
 	
 	bool ReadLock()
 	{
-		return read_lock(&m_bucket_rwlock);
+		return rwlock_readlock(&m_bucket_rwlock);
 	}
 	bool ReadUnlock()
 	{
-		return read_unlock(&m_bucket_rwlock);
+		return rwlock_read_unlock(&m_bucket_rwlock);
 	}
 	bool WriteLock()
 	{
-		return write_lock(&m_bucket_rwlock);
+		return rwlock_writelock(&m_bucket_rwlock);
 	}
 
 	bool WriteUnlock()
 	{
-		return write_unlock(&m_bucket_rwlock);
+		return rwlock_write_unlock(&m_bucket_rwlock);
 	}
 	
 private:

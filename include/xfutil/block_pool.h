@@ -28,11 +28,10 @@ namespace xfutil
 class BlockPool
 {
 public:
-	BlockPool()
+	BlockPool(uint32_t block_size) : m_block_size(block_size)
 	{
 		spinlock_init(&m_lock);
 		
-		m_block_size = 0;
 		m_cache_start = nullptr;
 		m_cache_end = nullptr;
 	}
@@ -53,7 +52,7 @@ public:
 	 * block_size: 块大小，需对齐到4096
 	 * cache_num: 缓存块的数量
 	 */
-	bool Init(uint32_t block_size, uint32_t cache_num);
+	bool Init(uint32_t cache_num);
 	
 	/**申请一个块，如果失败，返回nullptr*/
 	byte_t* Alloc();
@@ -62,13 +61,13 @@ public:
 	void Free(byte_t* block);
 
 	/**块大小*/
-	inline uint32_t BlockSize()
+	inline uint32_t BlockSize() const
 	{
 		return m_block_size;
 	}
 private:
+	const uint32_t m_block_size;
 	spinlock_t m_lock;
-	uint32_t m_block_size;
 	byte_t* m_cache_start;
 	byte_t* m_cache_end;
 	std::deque<byte_t*> m_free_blocks;

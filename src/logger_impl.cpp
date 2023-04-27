@@ -48,6 +48,12 @@ const char* LEVEL_DESC[LogLevel::LEVEL_MAX] =
 #undef QUEUE_CAPACITY
 #define QUEUE_CAPACITY  10000
 
+LoggerImpl::LoggerImpl() : m_pool(BLOCK_SIZE)
+{
+    m_started = false;
+    m_filesize = 0;
+}
+
 void LoggerImpl::Rename()
 {
     //尝试删除最老的，然后更名其他的
@@ -120,7 +126,7 @@ bool LoggerImpl::Start(const LogConfig& conf)
 	}
     m_filesize = m_logfile.Size();
 
-    m_pool.Init(BLOCK_SIZE, CACHE_NUM);
+    m_pool.Init(CACHE_NUM);
 
 	//初始化队列
 	m_data_queue.SetCapacity(QUEUE_CAPACITY);
@@ -158,8 +164,7 @@ void LoggerImpl::LogMsg(LogLevel level, const char *file_name, const char* func_
     gettimeofday(&tv, NULL);
 
 	struct tm t_now;
-	time_t sec = tv.tv_sec;
-	localtime_r(&sec, &t_now);
+	localtime_r(&tv.tv_sec, &t_now);
 	
     char line_buf[64];
     if(m_conf.flags & FLAG_OUT_LINENUM)
@@ -182,7 +187,7 @@ void LoggerImpl::LogMsg(LogLevel level, const char *file_name, const char* func_
     data.buf = m_pool.Alloc();
 
     data.len = snprintf((char*)data.buf, BLOCK_SIZE, 
-    	"%04d-%02d-%02d %02d:%02d:%02d-%03lu [%s] [%s:%s:%s] %s\n",
+    	"%04d-%02d-%02d %02d:%02d:%02d.%03lu [%s] [%s:%s:%s] %s\n",
     	t_now.tm_year+1900, t_now.tm_mon+1, t_now.tm_mday, 
     	t_now.tm_hour, t_now.tm_min, t_now.tm_sec, (uint64_t)tv.tv_usec/1000,
     	LEVEL_DESC[level],

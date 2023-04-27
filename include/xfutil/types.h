@@ -85,6 +85,11 @@ static_assert(sizeof(double) == 8, "invalid double");
 #define LIKELY(x)   (__builtin_expect((x), 1))
 #define UNLIKELY(x) (__builtin_expect((x), 0))
 
+//根据成员指针获取结构体指针
+#define container_of(ptr, type, member) ({ \
+	(type *)( (char *)ptr - offsetof(type, member) );})
+
+
 #define INVALID_FIELD_ID     -1 
 #define END_FIELD_ID         0
 #define MIN_FIELD_ID         1

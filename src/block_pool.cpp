@@ -23,10 +23,30 @@ namespace xfutil
 
 #define BLOCK_ALGIN		4096
 
-bool BlockPool::Init(uint32_t block_size, uint32_t cache_num)
+BlockPool::BlockPool(uint32_t block_size) : m_block_size(block_size)
 {
-	assert(block_size % BLOCK_ALGIN == 0);
-	if(block_size < BLOCK_ALGIN || block_size % BLOCK_ALGIN != 0)
+    spinlock_init(&m_lock);
+    
+    m_cache_start = nullptr;
+    m_cache_end = nullptr;
+}
+
+BlockPool::~BlockPool()
+{
+    if(m_cache_start != nullptr)
+    {
+        xfree(m_cache_start);
+        m_cache_start = nullptr;
+        m_cache_end = nullptr;
+    }
+    
+    spinlock_destroy(&m_lock);
+}
+
+bool BlockPool::Init(uint32_t cache_num)
+{
+	assert(m_block_size % BLOCK_ALGIN == 0);
+	if(m_block_size < BLOCK_ALGIN || m_block_size % BLOCK_ALGIN != 0)
 	{
 		return false;
 	}
@@ -36,19 +56,18 @@ bool BlockPool::Init(uint32_t block_size, uint32_t cache_num)
 		return false;
 	}
 	
-	uint64_t size = (uint64_t)block_size * cache_num;
-	byte_t* buf = xmalloc(size);
+	uint64_t size = (uint64_t)m_block_size * cache_num;
+	byte_t* buf = xmalloc(size, BLOCK_ALGIN);
 	if(buf == nullptr)
 	{
 		return false;
 	}
-	m_block_size = block_size;
 	m_cache_start = buf;
 	m_cache_end = buf + size;
 	for(uint32_t i = 0; i < cache_num; ++i)
 	{
 		m_free_blocks.push_back(buf);
-		buf += block_size;
+		buf += m_block_size;
 	}
 	return true;
 }
@@ -64,7 +83,7 @@ byte_t* BlockPool::Alloc()
 			return buf;
 		}
 	}
-	return xmalloc(m_block_size);
+	return xmalloc(m_block_size, BLOCK_ALGIN);
 }
 
 void BlockPool::Free(byte_t* block)
