@@ -19,15 +19,143 @@ limitations under the License.
 namespace xfutil
 {
 
+byte_t* EncodeVarint(byte_t* buf, uint16_t v)
+{
+    if(v < (1<<7))
+    {
+        *(buf++) = v;
+    }
+    else if(v < (1<<14))
+    {
+        *(buf++) = v | 0x80;
+        *(buf++) = v>>7;
+    }
+    else
+    {
+        *(buf++) =      v | 0x80;
+        *(buf++) = (v>>7) | 0x80;
+        *(buf++) = v>>14;
+    }
+    return buf;
+}
+
+byte_t* EncodeVarint(byte_t* buf, uint32_t v)
+{
+    if(v < (1<<7))
+    {
+        *(buf++) = v;
+    }
+    else if(v < (1<<14))
+    {
+        *(buf++) = v | 0x80;
+        *(buf++) = v>>7;
+    }
+    else if(v < (1<<21))
+    {
+        *(buf++) =      v | 0x80;
+        *(buf++) = (v>>7) | 0x80;
+        *(buf++) = v>>14;
+    }
+    else if(v < (1<<28))
+    {
+        *(buf++) =      v | 0x80;
+        *(buf++) = (v>>7) | 0x80;
+        *(buf++) = (v>>14)| 0x80;
+        *(buf++) = v>>21;
+    }
+    else
+    {
+        *(buf++) =      v | 0x80;
+        *(buf++) = (v>>7) | 0x80;
+        *(buf++) = (v>>14)| 0x80;
+        *(buf++) = (v>>21)| 0x80;
+        *(buf++) = v>>28;
+    }
+    return buf;
+}
+
 byte_t* EncodeVarint(byte_t* buf, uint64_t v)
 {
-	while(v >= 0x80)
-	{
-		*(buf++) = 0x80 | (v & 0x7f);
-		v >>= 7;
-	}
-	*(buf++) = v;
-	return buf;
+    if(v < (1ULL<<35))
+    {
+        if(v < (1<<7))
+        {
+            *(buf++) = v;
+        }
+        else if(v < (1<<14))
+        {
+            *(buf++) = v | 0x80;
+            *(buf++) = v>>7;
+        }
+        else if(v < (1<<21))
+        {
+            *(buf++) =      v | 0x80;
+            *(buf++) = (v>>7) | 0x80;
+            *(buf++) = v>>14;
+        }
+        else if(v < (1<<28))
+        {
+            *(buf++) =      v | 0x80;
+            *(buf++) = (v>>7) | 0x80;
+            *(buf++) = (v>>14)| 0x80;
+            *(buf++) = v>>21;
+        }
+        else
+        {
+            *(buf++) =      v | 0x80;
+            *(buf++) = (v>>7) | 0x80;
+            *(buf++) = (v>>14)| 0x80;
+            *(buf++) = (v>>21)| 0x80;
+            *(buf++) = v>>28;
+        }
+        return buf;
+    }
+
+    *(buf++) =      v | 0x80;
+    *(buf++) = (v>>7) | 0x80;
+    *(buf++) = (v>>14)| 0x80;
+    *(buf++) = (v>>21)| 0x80;
+
+    if(v < (1ULL<<35))
+    {
+        *(buf++) = v>>28;
+    }
+    else if(v < (1ULL<<42))
+    {
+        *(buf++) = (v>>28)| 0x80;
+        *(buf++) = v>>35;
+    }
+    else if(v < (1ULL<<49))
+    {
+        *(buf++) = (v>>28)| 0x80;
+        *(buf++) = (v>>35)| 0x80;
+        *(buf++) = v>>42;
+    }
+    else if(v < (1ULL<<56))
+    {
+        *(buf++) = (v>>28)| 0x80;
+        *(buf++) = (v>>35)| 0x80;
+        *(buf++) = (v>>42)| 0x80;
+        *(buf++) = v>>49;
+    }
+    else if(v < (1ULL<<63))
+    {
+        *(buf++) = (v>>28)| 0x80;
+        *(buf++) = (v>>35)| 0x80;
+        *(buf++) = (v>>42)| 0x80;
+        *(buf++) = (v>>49)| 0x80;
+        *(buf++) = v>>56;
+    }
+    else
+    {
+        *(buf++) = (v>>28)| 0x80;
+        *(buf++) = (v>>35)| 0x80;
+        *(buf++) = (v>>42)| 0x80;
+        *(buf++) = (v>>49)| 0x80;
+        *(buf++) = (v>>56)| 0x80;
+        *(buf++) = v>>63;
+    }
+    return buf;
 }
 
 bool DecodeVarint(const byte_t*& buf, const byte_t* end, uint64_t& v)

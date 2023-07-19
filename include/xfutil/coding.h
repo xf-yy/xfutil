@@ -74,16 +74,17 @@ static inline byte_t* EncodeFixed(byte_t* buf, uint32_t value)
 
 static inline bool DecodeFixed(const byte_t* &buf, const byte_t* end, uint32_t& v)
 {
-    if(buf + sizeof(uint32_t) > end)
+    if(LIKELY(buf + sizeof(uint32_t) <= end))
     {
-        return false;
+        v =  ((uint32_t)buf[0])
+            | ((uint32_t)buf[1] << 8) 
+            | ((uint32_t)buf[2] << 16) 
+            | ((uint32_t)buf[3] << 24);
+        buf += sizeof(uint32_t);
+        return true;
+
     }
-	v =  ((uint32_t)buf[0])
-		| ((uint32_t)buf[1] << 8) 
-		| ((uint32_t)buf[2] << 16) 
-		| ((uint32_t)buf[3] << 24);
-	buf += sizeof(uint32_t);
-	return true;
+    return false;
 }
 
 static inline byte_t* EncodeFixed(byte_t* buf, uint64_t value)
@@ -102,20 +103,20 @@ static inline byte_t* EncodeFixed(byte_t* buf, uint64_t value)
 
 static inline bool DecodeFixed(const byte_t* &buf, const byte_t* end, uint64_t& v)
 {
-    if(buf + sizeof(uint64_t) > end)
+    if(LIKELY(buf + sizeof(uint64_t) <= end))
     {
-        return false;
+        v = ((uint64_t)buf[0])
+            | ((uint64_t)buf[1] << 8) 
+            | ((uint64_t)buf[2] << 16) 
+            | ((uint64_t)buf[3] << 24)
+            | ((uint64_t)buf[4] << 32) 
+            | ((uint64_t)buf[5] << 40) 
+            | ((uint64_t)buf[6] << 48)
+            | ((uint64_t)buf[7] << 56);
+        buf += sizeof(uint64_t);
+        return true;
     }
-	v = ((uint64_t)buf[0])
-	   	| ((uint64_t)buf[1] << 8) 
-	   	| ((uint64_t)buf[2] << 16) 
-	   	| ((uint64_t)buf[3] << 24)
-	   	| ((uint64_t)buf[4] << 32) 
-	   	| ((uint64_t)buf[5] << 40) 
-	   	| ((uint64_t)buf[6] << 48)
-	   	| ((uint64_t)buf[7] << 56);
-	buf += sizeof(uint64_t);
-	return true;
+    return false;
 }
 
 static inline byte_t* EncodeFloat(byte_t* buf, float value)
@@ -192,6 +193,8 @@ static inline int64_t DecodeZigZag(uint64_t value)
     return (value >> 1) ^ -static_cast<int64_t>(value & 1);
 }
 
+byte_t* EncodeVarint(byte_t* buf, uint16_t v);
+byte_t* EncodeVarint(byte_t* buf, uint32_t v);
 byte_t* EncodeVarint(byte_t* buf, uint64_t v);
 static inline byte_t* EncodeVarint(byte_t* buf, int64_t v)
 {
@@ -208,10 +211,6 @@ static inline bool DecodeVarint(const byte_t*& buf, const byte_t* end, int64_t& 
 }
 
 
-static inline byte_t* EncodeVarint(byte_t* buf, uint16_t v)
-{
-    return EncodeVarint(buf, (uint64_t)v);
-}
 static inline byte_t* EncodeVarint(byte_t* buf, int16_t v)
 {
     uint16_t uv = EncodeZigZag(v);
@@ -233,10 +232,6 @@ static inline bool DecodeVarint(const byte_t*& buf, const byte_t* end, int16_t& 
     return ret;
 }
 
-static inline byte_t* EncodeVarint(byte_t* buf, uint32_t v)
-{
-    return EncodeVarint(buf, (uint64_t)v);
-}
 static inline byte_t* EncodeVarint(byte_t* buf, int32_t v)
 {
     uint32_t uv = EncodeZigZag(v);
