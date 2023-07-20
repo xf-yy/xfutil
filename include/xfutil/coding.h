@@ -253,6 +253,8 @@ static inline bool DecodeVarint(const byte_t*& buf, const byte_t* end, int32_t& 
     return ret;
 }
 
+byte_t* EncodeVarintR(byte_t* buf, uint32_t v);
+bool DecodeVarintR(const byte_t*& buf, const byte_t* begin, uint32_t& v);
 
 static inline byte_t* EncodeString(byte_t* buf, const char* str, uint64_t str_len)
 {
