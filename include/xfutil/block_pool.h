@@ -1,5 +1,5 @@
 /*************************************************************************
-Copyright (C) 2023 The xfutil Authors. All rights reserved.
+Copyright (C) 2022 The xfutil Authors. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ limitations under the License.
 
 #include <deque>
 #include "xfutil/strutil.h"
-#include "spinlock.h"
+#include "xfutil/spinlock.h"
 
 namespace xfutil
 {
@@ -28,31 +28,15 @@ namespace xfutil
 class BlockPool
 {
 public:
-	BlockPool(uint32_t block_size) : m_block_size(block_size)
-	{
-		spinlock_init(&m_lock);
-		
-		m_cache_start = nullptr;
-		m_cache_end = nullptr;
-	}
-	~BlockPool()
-	{
-		if(m_cache_start != nullptr)
-		{
-			xfree(m_cache_start);
-			m_cache_start = nullptr;
-			m_cache_end = nullptr;
-		}
-		
-		spinlock_destroy(&m_lock);
-	}
+	BlockPool();
+	~BlockPool();
 	
 public:
 	/**初始化内存块池
-	 * block_size: 块大小，需对齐到4096
+     * block_size: 块大小，需对齐到4096
 	 * cache_num: 缓存块的数量
 	 */
-	bool Init(uint32_t cache_num);
+	bool Init(uint32_t block_size, uint32_t cache_num);
 	
 	/**申请一个块，如果失败，返回nullptr*/
 	byte_t* Alloc();
@@ -65,11 +49,13 @@ public:
 	{
 		return m_block_size;
 	}
+	
 private:
-	const uint32_t m_block_size;
 	spinlock_t m_lock;
+	uint32_t m_block_size;
 	byte_t* m_cache_start;
 	byte_t* m_cache_end;
+
 	std::deque<byte_t*> m_free_blocks;
 	
 private:
@@ -77,15 +63,6 @@ private:
 	BlockPool& operator=(const BlockPool&) = delete;
 };
 
-#if 0
-//小块内存池
-class MemPool
-{
-private:
-	MemPool(const MemPool&) = delete;
-	MemPool& operator=(const MemPool&) = delete;
-};
-#endif
 
 }
 

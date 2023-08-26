@@ -24,9 +24,9 @@ using namespace xfutil;
 namespace xfutil
 {
 
-Packer::Packer(BlockListPtr& buf_list) : m_block_list(buf_list)
+Packer::Packer(BlockBufferPoolPtr& buf_list) : m_block_buffer_pool(buf_list)
 {
-    m_block_buf = m_block_list->Alloc(1);
+    m_block_buf = m_block_buffer_pool->Alloc(1);
     m_ptr = m_block_buf->buf;
 }
 
@@ -35,7 +35,7 @@ void Packer::Pack(uint8_t v)
     //保证空间足够大
     if(UNLIKELY(m_block_buf->size + sizeof(uint8_t) > m_block_buf->capacity))
     {
-        m_block_buf = m_block_list->Alloc(sizeof(uint8_t));
+        m_block_buf = m_block_buffer_pool->Alloc(sizeof(uint8_t));
         m_ptr = m_block_buf->buf;
     }
 
@@ -54,7 +54,7 @@ void Packer::Pack(uint16_t v)
     //保证空间足够大
     if(UNLIKELY(m_block_buf->size + MAX_V16_SIZE > m_block_buf->capacity))
     {
-        m_block_buf = m_block_list->Alloc(MAX_V16_SIZE);
+        m_block_buf = m_block_buffer_pool->Alloc(MAX_V16_SIZE);
         m_ptr = m_block_buf->buf;
     }
 
@@ -69,7 +69,7 @@ void Packer::PackFixed(uint16_t v)
     //保证空间足够大
     if(UNLIKELY(m_block_buf->size + sizeof(uint16_t) > m_block_buf->capacity))
     {
-        m_block_buf = m_block_list->Alloc(sizeof(uint16_t));
+        m_block_buf = m_block_buffer_pool->Alloc(sizeof(uint16_t));
         m_ptr = m_block_buf->buf;
     }
 
@@ -89,7 +89,7 @@ void Packer::Pack(uint32_t v)
     //保证空间足够大
     if(UNLIKELY(m_block_buf->size + MAX_V32_SIZE > m_block_buf->capacity))
     {
-        m_block_buf = m_block_list->Alloc(MAX_V32_SIZE);
+        m_block_buf = m_block_buffer_pool->Alloc(MAX_V32_SIZE);
         m_ptr = m_block_buf->buf;
     }
 
@@ -104,7 +104,7 @@ void Packer::PackFixed(uint32_t v)
     //保证空间足够大
     if(UNLIKELY(m_block_buf->size + sizeof(uint32_t) > m_block_buf->capacity))
     {
-        m_block_buf = m_block_list->Alloc(sizeof(uint32_t));
+        m_block_buf = m_block_buffer_pool->Alloc(sizeof(uint32_t));
         m_ptr = m_block_buf->buf;
     }
 
@@ -124,7 +124,7 @@ void Packer::Pack(uint64_t v)
     //保证空间足够大
     if(UNLIKELY(m_block_buf->size + MAX_V64_SIZE > m_block_buf->capacity))
     {
-        m_block_buf = m_block_list->Alloc(MAX_V64_SIZE);
+        m_block_buf = m_block_buffer_pool->Alloc(MAX_V64_SIZE);
         m_ptr = m_block_buf->buf;
     }
 
@@ -139,7 +139,7 @@ void Packer::PackFixed(uint64_t v)
     //保证空间足够大
     if(UNLIKELY(m_block_buf->size + sizeof(uint64_t) > m_block_buf->capacity))
     {
-        m_block_buf = m_block_list->Alloc(sizeof(uint64_t));
+        m_block_buf = m_block_buffer_pool->Alloc(sizeof(uint64_t));
         m_ptr = m_block_buf->buf;
     }
 
@@ -154,7 +154,7 @@ void Packer::Pack(const StrView& v)
     uint64_t ns = MAX_V16_SIZE + v.size;
     if(UNLIKELY(m_block_buf->size + ns > m_block_buf->capacity))
     {
-        m_block_buf = m_block_list->Alloc(ns);
+        m_block_buf = m_block_buffer_pool->Alloc(ns);
         m_ptr = m_block_buf->buf;
     }
 

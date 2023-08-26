@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ***************************************************************************/
 
-#ifndef __xfutil_block_memory_h__
-#define __xfutil_block_memory_h__
+#ifndef __xfutil_memory_pool_node_h__
+#define __xfutil_memory_pool_node_h__
 
 #include <deque>
 #include "xfutil.h"
@@ -24,7 +24,7 @@ limitations under the License.
 namespace xfutil
 {
 
-struct BlockMemory
+struct MemoryPoolNode
 {
     ListNode node;
 
@@ -37,16 +37,16 @@ struct BlockMemory
 };
 
 //初始化
-void BlockMemoryInit(BlockMemory* mem, uint32_t block_size, uint32_t element_size);
+void MemoryPoolInit(MemoryPoolNode* mem, uint32_t block_size, uint32_t element_size);
 
 //失败时返回nullptr
-byte_t* BlockMemoryAlloc(BlockMemory* mem);
+byte_t* MemoryPoolAlloc(MemoryPoolNode* mem);
 
 //0: 可用数量从0->1，1：可用数量变满，其他返回-1
-int BlockMemoryFree(BlockMemory* mem, byte_t* element);
+int MemoryPoolFree(MemoryPoolNode* mem, byte_t* element);
 
 //返回已使用的元素数量
-inline uint32_t BlockMemoryAllocatedSize(BlockMemory* mem)
+inline uint32_t MemoryPoolAllocatedSize(MemoryPoolNode* mem)
 {
     return mem->allocated_element_num * mem->element_size;
 }

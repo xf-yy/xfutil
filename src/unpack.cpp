@@ -25,23 +25,23 @@ using namespace xfutil;
 namespace xfutil
 {
 
-Unpacker::Unpacker(BlockListPtr& buf_list) : m_block_list(buf_list)
+Unpacker::Unpacker(BlockBufferPoolPtr& buf_list) : m_block_buffer_pool(buf_list)
 {
-    m_block_list_idx = -1;
+    m_block_buffer_idx = -1;
     NextBlock();
 }
 
 bool Unpacker::NextBlock()
 {
-    const auto bufs = m_block_list->Buffers();
-    if(++m_block_list_idx >= (ssize_t)bufs.size())
+    const auto bufs = m_block_buffer_pool->BlockBuffers();
+    if(++m_block_buffer_idx >= (ssize_t)bufs.size())
     {
         m_buf_end = (byte_t*)"";
         m_ptr = m_buf_end;
         return false;
     }
 
-    const BlockBuffer& buf = bufs[m_block_list_idx];
+    const BlockBuffer& buf = bufs[m_block_buffer_idx];
     m_ptr = buf.buf;
     m_buf_end = buf.buf + buf.size;
     return true;

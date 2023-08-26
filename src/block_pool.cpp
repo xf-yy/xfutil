@@ -16,17 +16,17 @@ limitations under the License.
 
 #include <vector>
 #include <malloc.h>
-#include "block_pool.h"
+#include "xfutil/block_pool.h"
 
 namespace xfutil
 {
 
 #define BLOCK_ALGIN		4096
 
-BlockPool::BlockPool(uint32_t block_size) : m_block_size(block_size)
+BlockPool::BlockPool()
 {
     spinlock_init(&m_lock);
-    
+    m_block_size = 0;
     m_cache_start = nullptr;
     m_cache_end = nullptr;
 }
@@ -43,10 +43,10 @@ BlockPool::~BlockPool()
     spinlock_destroy(&m_lock);
 }
 
-bool BlockPool::Init(uint32_t cache_num)
+bool BlockPool::Init(uint32_t block_size, uint32_t cache_num)
 {
-	assert(m_block_size % BLOCK_ALGIN == 0);
-	if(m_block_size < BLOCK_ALGIN || m_block_size % BLOCK_ALGIN != 0)
+	assert(block_size % BLOCK_ALGIN == 0);
+	if(block_size < BLOCK_ALGIN || block_size % BLOCK_ALGIN != 0)
 	{
 		return false;
 	}
@@ -55,9 +55,10 @@ bool BlockPool::Init(uint32_t cache_num)
 	{
 		return false;
 	}
+	m_block_size = block_size;
 	
 	uint64_t size = (uint64_t)m_block_size * cache_num;
-	byte_t* buf = xmalloc(size, BLOCK_ALGIN);
+	byte_t* buf = xmalloc(size);
 	if(buf == nullptr)
 	{
 		return false;

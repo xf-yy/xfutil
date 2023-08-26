@@ -14,26 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ***************************************************************************/
 
-#include "xfutil/block_list.h"
+#include "xfutil/block_buffer_pool.h"
 #include "xfutil/types.h"
-#include "block_pool.h"
+#include "xfutil/block_pool.h"
 
 namespace xfutil
 {
 
-BlockList::BlockList(BlockPool& block_pool)
+BlockBufferPool::BlockBufferPool(BlockPool& block_pool)
 	: m_block_pool(block_pool)
 {
 	assert(m_block_pool.BlockSize() >= 1024);
 	m_bufs.reserve(32);
 }
 
-BlockList::~BlockList() 
+BlockBufferPool::~BlockBufferPool() 
 {
 	Free();
 }
 
-void BlockList::Free()
+void BlockBufferPool::Free()
 {
 	for(size_t i = 0; i < m_bufs.size(); ++i) 
 	{
@@ -50,7 +50,7 @@ void BlockList::Free()
 	m_bufs.clear();
 }
 
-BlockBuffer* BlockList::Alloc(uint32_t size) 
+BlockBuffer* BlockBufferPool::Alloc(uint32_t size) 
 {
     BlockBuffer buf;
     buf.size = 0;

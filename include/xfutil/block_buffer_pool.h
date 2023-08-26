@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ***************************************************************************/
 
-#ifndef __xfutil_block_list_h__
-#define __xfutil_block_list_h__
+#ifndef __xfutil_block_buffer_pool_h__
+#define __xfutil_block_buffer_pool_h__
 
 #include <vector>
 #include <malloc.h>
@@ -33,11 +33,11 @@ struct BlockBuffer
 };
 
 class BlockPool;
-class BlockList
+class BlockBufferPool
 {
 public:
-	explicit BlockList(BlockPool& block_pool);
-	~BlockList();
+	explicit BlockBufferPool(BlockPool& block_pool);
+	~BlockBufferPool();
 	
 public:
     //重新分配一个buffer，至少一个block大小
@@ -47,7 +47,7 @@ public:
 	void Free();
 
     //获取已分配的buffer集
-    inline const std::vector<BlockBuffer>& Buffers()
+    inline const std::vector<BlockBuffer>& BlockBuffers()
     {
         return m_bufs;
     }
@@ -57,12 +57,12 @@ private:
     std::vector<BlockBuffer> m_bufs;
 	
 private:
-	BlockList(const BlockList&) = delete;
-	BlockList& operator=(const BlockList&) = delete;
+	BlockBufferPool(const BlockBufferPool&) = delete;
+	BlockBufferPool& operator=(const BlockBufferPool&) = delete;
 };
 
-typedef std::shared_ptr<BlockList> BlockListPtr;
-#define NewBlockList 	std::make_shared<BlockList>
+typedef std::shared_ptr<BlockBufferPool> BlockBufferPoolPtr;
+#define NewBlockBufferPool 	std::make_shared<BlockBufferPool>
 
 }
 

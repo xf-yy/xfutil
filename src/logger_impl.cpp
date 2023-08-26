@@ -48,7 +48,7 @@ const char* LEVEL_DESC[LogLevel::LEVEL_MAX] =
 #undef QUEUE_CAPACITY
 #define QUEUE_CAPACITY  10000
 
-LoggerImpl::LoggerImpl() : m_pool(BLOCK_SIZE)
+LoggerImpl::LoggerImpl()
 {
     m_started = false;
     m_filesize = 0;
@@ -126,7 +126,7 @@ bool LoggerImpl::Start(const LogConfig& conf)
 	}
     m_filesize = m_logfile.Size();
 
-    m_pool.Init(CACHE_NUM);
+    m_pool.Init(BLOCK_SIZE, CACHE_NUM);
 
 	//初始化队列
 	m_data_queue.SetCapacity(QUEUE_CAPACITY);

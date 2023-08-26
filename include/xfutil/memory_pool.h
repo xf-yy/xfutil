@@ -26,20 +26,20 @@ limitations under the License.
 namespace xfutil
 {
 
-class BlockMemory;
+struct MemoryPoolNode;
 
 //小块内存池<4KB
 class MemoryPool
 {
 public:
-	MemoryPool(BlockPool& block_pool, uint32_t element_size);
+	MemoryPool(BlockPool& block_pool);
 	~MemoryPool();
 	
 public:	
 	/**初始化内存池
 	 * cache_num: 缓存块的数量
 	 */
-	bool Init(uint32_t cache_num);
+	bool Init(uint32_t element_size, uint32_t cache_num);
 
 	/**申请一个buffer，如果失败，返回nullptr*/
 	byte_t* Alloc();
@@ -59,21 +59,21 @@ public:
     }    
 
 private:
-    BlockMemory* GetFreeBlockHead();
-    BlockMemory* FindBlockHead(byte_t* ptr);
+    MemoryPoolNode* GetFreeBlockHead();
+    MemoryPoolNode* FindBlockHead(byte_t* ptr);
     
-    void RemoveBlockHead(BlockMemory* head);
-    void AddBlockHead(BlockMemory* head);
+    void RemoveBlockHead(MemoryPoolNode* head);
+    void AddBlockHead(MemoryPoolNode* head);
 
 private:
     BlockPool& m_block_pool;
-    const uint32_t m_element_size;
 
     std::mutex m_mutex;
     uint64_t m_allocated_block_size;
     uint64_t m_allocated_size;
 
-    BlockMemory* m_cache_block_head;
+    uint32_t m_element_size;
+    MemoryPoolNode* m_cache_block_head;
     byte_t* m_cache_block_end;
 
     List m_free_list;

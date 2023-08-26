@@ -15,7 +15,7 @@ limitations under the License.
 ***************************************************************************/
 
 #include <deque>
-#include "block_memory.h"
+#include "memory_pool_node.h"
 
 namespace xfutil
 {
@@ -23,23 +23,23 @@ namespace xfutil
 #ifdef _DEBUG
 union TestBlockMemory
 {
-    BlockMemory mem;
+    MemoryPoolNode mem;
 };
-static_assert(sizeof(BlockMemory) % sizeof(void*) == 0, "非8字节对齐");
+static_assert(sizeof(MemoryPoolNode) % sizeof(void*) == 0, "非8字节对齐");
 #endif
 
 
-void BlockMemoryInit(BlockMemory* mem, uint32_t block_size, uint32_t element_size)
+void MemoryPoolInit(MemoryPoolNode* mem, uint32_t block_size, uint32_t element_size)
 {
     mem->block_size = block_size;
     mem->element_size = element_size;
-    mem->max_element_num = (block_size - sizeof(BlockMemory)) / element_size;
+    mem->max_element_num = (block_size - sizeof(MemoryPoolNode)) / element_size;
     mem->allocated_element_num = 0;
     mem->next_element_offset = block_size - mem->max_element_num * element_size;
     mem->next_element_ptr = nullptr;
 }
 
-byte_t* BlockMemoryAlloc(BlockMemory* mem)
+byte_t* MemoryPoolAlloc(MemoryPoolNode* mem)
 {
     byte_t* element = nullptr;
 
@@ -60,7 +60,7 @@ byte_t* BlockMemoryAlloc(BlockMemory* mem)
     return element;
 }
 
-int BlockMemoryFree(BlockMemory* mem, byte_t* element)
+int MemoryPoolFree(MemoryPoolNode* mem, byte_t* element)
 {
     if(element < (byte_t*)mem || element >= (byte_t*)mem + mem->block_size)
     {
