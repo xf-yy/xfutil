@@ -45,6 +45,26 @@ static inline void xfree(void* ptr)
 	free(ptr);
 }
 
+class BufferGuard
+{
+public:
+	explicit BufferGuard(byte_t* buf)
+	{
+		m_buf = buf;
+	}
+	~BufferGuard()
+	{
+		xfree(m_buf);
+	}
+    
+private:
+	byte_t* m_buf;
+	
+private:
+	BufferGuard(const BufferGuard&) = delete;
+	BufferGuard& operator=(const BufferGuard&) = delete;
+};
+
 #ifdef __linux__
 static inline void StrCpy(char* dst, size_t dst_len, const char* src)
 {
@@ -240,6 +260,8 @@ public:
 
 };
 
+std::string TrimLeft(const std::string& value);
+std::string TrimRight(const std::string& value);
 
 }
 

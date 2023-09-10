@@ -19,7 +19,7 @@ limitations under the License.
 
 #include "xfutil/types.h"
 #include "xfutil/strutil.h"
-#include "xfutil/block_buffer_pool.h"
+#include "xfutil/buffer.h"
 
 namespace xfutil 
 {
@@ -31,7 +31,7 @@ typedef bool (*UnpackStructCallback)(Unpacker&, void* arg);
 class Unpacker
 {
 public:
-    Unpacker(BlockBufferPoolPtr& buf_list);
+    Unpacker(BufferPoolPtr& buf_list);
     
 public:
     bool Unpack(bool& v)
@@ -97,7 +97,7 @@ private:
     bool NextBlock();
 
 private:
-    BlockBufferPoolPtr m_block_buffer_pool;
+    BufferPoolPtr m_block_buffer_pool;
 
     ssize_t m_block_buffer_idx;
     const byte_t* m_ptr;

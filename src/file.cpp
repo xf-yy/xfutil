@@ -159,11 +159,12 @@ bool File::Copy(const char *src_filepath, const char *dst_filepath, bool sync/* 
 
     //1MiB为单位
     constexpr int BUF_SIZE = 1024*1024;
-    BufferGuard buf(BUF_SIZE);
+    byte_t* buf = xmalloc(BUF_SIZE);
+    BufferGuard buf_guard(buf);
 
     for(;;)
     {
-        int64_t read_size = src_file.Read(buf.Buffer(), BUF_SIZE);
+        int64_t read_size = src_file.Read(buf, BUF_SIZE);
         if(read_size < 0)
         {
             return false;
@@ -172,7 +173,7 @@ bool File::Copy(const char *src_filepath, const char *dst_filepath, bool sync/* 
         {
             break;
         }
-        if(dst_file.Write(buf.Buffer(), read_size) != read_size)
+        if(dst_file.Write(buf, read_size) != read_size)
         {
             return false;
         }

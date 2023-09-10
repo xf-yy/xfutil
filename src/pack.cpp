@@ -24,7 +24,7 @@ using namespace xfutil;
 namespace xfutil
 {
 
-Packer::Packer(BlockBufferPoolPtr& buf_list) : m_block_buffer_pool(buf_list)
+Packer::Packer(BufferPoolPtr& buf_list) : m_block_buffer_pool(buf_list)
 {
     m_block_buf = m_block_buffer_pool->Alloc(1);
     m_ptr = m_block_buf->buf;

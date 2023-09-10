@@ -18,7 +18,7 @@ limitations under the License.
 #define __xfutil_pack_h__
 
 #include "xfutil/types.h"
-#include "xfutil/block_buffer_pool.h"
+#include "xfutil/buffer.h"
 #include "xfutil/strutil.h"
 
 namespace xfutil 
@@ -30,7 +30,7 @@ typedef void (*PackStructCallback)(Packer&, void* arg);
 class Packer
 {
 public:
-    Packer(BlockBufferPoolPtr& buf_list);
+    Packer(BufferPoolPtr& buf_list);
 
 public:
     void Pack(bool v)
@@ -85,14 +85,14 @@ public:
     }
     
 public:
-    BlockBufferPoolPtr& GetBlockBufferPool()
+    BufferPoolPtr& GetBlockBufferPool()
     {
         return m_block_buffer_pool;
     }
 
 private:
-    BlockBufferPoolPtr m_block_buffer_pool;
-    BlockBuffer* m_block_buf;          //当前正在写的buf
+    BufferPoolPtr m_block_buffer_pool;
+    Buffer* m_block_buf;          //当前正在写的buf
     byte_t* m_ptr;
 
 private:

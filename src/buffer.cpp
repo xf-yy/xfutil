@@ -85,5 +85,57 @@ byte_t* WriteBuffer::Write(uint32_t size)
 	return ptr;
 }
 
+BufferPool::BufferPool(BlockPool& block_pool)
+	: m_block_pool(block_pool)
+{
+	assert(m_block_pool.BlockSize() >= 1024);
+	m_bufs.reserve(32);
+}
+
+BufferPool::~BufferPool() 
+{
+	Free();
+}
+
+void BufferPool::Free()
+{
+	for(size_t i = 0; i < m_bufs.size(); ++i) 
+	{
+        Buffer& buf = m_bufs[i];
+        if(buf.capacity == m_block_pool.BlockSize())
+        {
+            m_block_pool.Free(buf.buf);
+        }
+        else
+        {
+            xfree(buf.buf);
+        }
+	}
+	m_bufs.clear();
+}
+
+Buffer* BufferPool::Alloc(uint32_t size) 
+{
+    Buffer buf;
+    buf.size = 0;
+
+	if(size <= m_block_pool.BlockSize())
+	{
+		buf.buf = m_block_pool.Alloc();
+        buf.capacity = m_block_pool.BlockSize();
+    }
+    else
+    {
+        size = ALIGN_UP(size, 4096);
+
+		buf.buf = xmalloc(size);
+		buf.capacity = size;
+	}
+	
+    m_bufs.push_back(buf);
+
+    return &m_bufs.back();
+}
+
 } 
 

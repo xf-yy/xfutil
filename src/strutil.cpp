@@ -98,5 +98,22 @@ uint32_t StrView::GetPrefixLength(const StrView& str) const
 	return min_len;
 }
 
+std::string TrimLeft(const std::string& value)
+{
+    auto pos = value.find_first_not_of(" \n\r\t");
+    if(pos == std::string::npos)
+    {
+        return value;
+    }
+    return value.substr(pos);
+}
+
+std::string TrimRight(const std::string& value)
+{
+    auto pos = value.find_last_not_of(" \n\r\t");
+    return value.substr(0, pos+1);
+
+}
+
 } 
 

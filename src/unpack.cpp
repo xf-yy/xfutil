@@ -25,7 +25,7 @@ using namespace xfutil;
 namespace xfutil
 {
 
-Unpacker::Unpacker(BlockBufferPoolPtr& buf_list) : m_block_buffer_pool(buf_list)
+Unpacker::Unpacker(BufferPoolPtr& buf_list) : m_block_buffer_pool(buf_list)
 {
     m_block_buffer_idx = -1;
     NextBlock();
@@ -41,7 +41,7 @@ bool Unpacker::NextBlock()
         return false;
     }
 
-    const BlockBuffer& buf = bufs[m_block_buffer_idx];
+    const Buffer& buf = bufs[m_block_buffer_idx];
     m_ptr = buf.buf;
     m_buf_end = buf.buf + buf.size;
     return true;

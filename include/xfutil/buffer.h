@@ -67,35 +67,44 @@ private:
 	WriteBuffer& operator=(const WriteBuffer&) = delete;
 };
 
-class BufferGuard
+struct Buffer
+{
+    byte_t* buf;
+    uint32_t capacity;
+    uint32_t size;
+};
+
+class BufferPool
 {
 public:
-	explicit BufferGuard(size_t size)
-	{
-		m_buf = xmalloc(size);
-        m_size = size;
-	}
-	~BufferGuard()
-	{
-		xfree(m_buf);
-	}
-	inline byte_t* Buffer()
+	explicit BufferPool(BlockPool& block_pool);
+	~BufferPool();
+	
+public:
+    //重新分配一个buffer，至少一个block大小
+    Buffer* Alloc(uint32_t size);
+
+	//清除所有数据
+	void Free();
+
+    //获取已分配的buffer集
+    inline const std::vector<Buffer>& BlockBuffers()
     {
-        return m_buf;
+        return m_bufs;
     }
-    inline size_t Size()
-    {
-        return m_size;
-    }
-    
-private:
-	byte_t* m_buf;
-    size_t m_size;
+
+private:	
+	BlockPool& m_block_pool;
+    std::vector<Buffer> m_bufs;
 	
 private:
-	BufferGuard(const BufferGuard&) = delete;
-	BufferGuard& operator=(const BufferGuard&) = delete;
+	BufferPool(const BufferPool&) = delete;
+	BufferPool& operator=(const BufferPool&) = delete;
 };
+
+typedef std::shared_ptr<BufferPool> BufferPoolPtr;
+#define NewBufferPool 	std::make_shared<BufferPool>
+
 
 }
 
