@@ -25,13 +25,14 @@ namespace xfutil
 class SysInfo
 {
 public:
-#ifdef __linux__
-
-    static inline uint32_t GetCpuCount()
+    static inline uint32_t GetCpuNum()
     {
         return std::thread::hardware_concurrency();
         //sysconf (_SC_NPROCESSORS_CONF);
     }
+
+#ifdef __linux__
+
     static inline uint32_t GetPageSize()
     {
         return sysconf(_SC_PAGESIZE);
@@ -40,13 +41,11 @@ public:
     {
         return (uint64_t)sysconf(_SC_PHYS_PAGES) * GetPageSize();
     }
-
-
-};
-
 #else
+
 #endif
 
+};
 
 
 }
