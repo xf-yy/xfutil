@@ -32,14 +32,11 @@ class Directory
 {
 public:	
 	//创建目录，必须保证父目录存在
-	static inline bool Create(const char* path)
-	{
-		mode_t old_mask = umask(0);
-		int ret = mkdir(path, 0644);
-		umask(old_mask);
-		return (ret == 0 || LastError == EEXIST);
-	}
-	//static bool CreateR(const char* path);
+	static bool Create(const char* path);
+
+	//递归创建目录
+	static bool Create_r(const char* path);
+
 	//递归移除目录
 	static bool Remove(const char* path);
 	static inline bool Rename(const char* old_path, const char* new_path)

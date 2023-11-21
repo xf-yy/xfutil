@@ -33,12 +33,12 @@ namespace xfutil
 struct FileTime
 {
 #ifdef _WIN32
-	second_t create_time;
+	uint64_t create_time;
 #else
-	second_t change_time;
+	uint64_t change_time;
 #endif
-	second_t access_time;
-	second_t modify_time;
+	uint64_t access_time;
+	uint64_t modify_time;
 };
 
 #ifdef _WIN32
@@ -111,7 +111,7 @@ public:
 		struct stat st;
 		return (stat(path, &st) == 0) ? st.st_size : -1;
 	}
-	static inline second_t ModifyTime(const char* path)
+	static inline uint64_t ModifyTime(const char* path)
 	{
 		struct stat st;
 		return (stat(path, &st) == 0) ? st.st_mtime : 0;

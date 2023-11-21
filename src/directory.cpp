@@ -16,6 +16,7 @@ limitations under the License.
 
 #include <fnmatch.h>
 #include <dirent.h>
+#include <string.h>
 #include "xfutil/strutil.h"
 #include "xfutil/directory.h"
 #include "xfutil/path.h"
@@ -24,23 +25,29 @@ limitations under the License.
 namespace xfutil 
 {
 
-//循环创建，先判断父目录是否存在，不存在则创建
-#if 0
-bool Directory::CreateR(const char* path)
+bool Directory::Create(const char* path)
 {
-	assert(path != nullptr);
-	
-	char tmp_path[MAX_PATH_LEN];
-	StrCpy(tmp_path, sizeof(tmp_path), path);
-	
-	char* slash = strchr(tmp_path+1, '/');
+	int ret = 0;
+	if(!Exist(path))
+	{
+		mode_t old_mask = umask(0);
+		ret = mkdir(path, 0644);
+		umask(old_mask);
+	}
+	return (ret == 0);
+}
+
+static bool Create_r(const char* path)
+{
+	//可能要修改内容
+	char* slash = strchr((char*)path+1, '/');
 	while(slash != nullptr)
 	{
 		*slash = '\0';
 		
-		if(access(tmp_path, F_OK) != 0)
+		if(!Directory::Exist(path))
 		{
-			if(mkdir(tmp_path, 0644) == -1 && LastError != EEXIST)
+			if(mkdir(path, 0644) != 0)
 			{
 				return false;
 			}
@@ -48,9 +55,23 @@ bool Directory::CreateR(const char* path)
 		*slash = '/';	//恢复
 		slash = strchr(slash+1, '/');
 	}
-	return Create(tmp_path);
+	if(!Directory::Exist(path))
+	{
+		if(mkdir(path, 0644) != 0)
+		{
+			return false;
+		}
+	}
+	return true;
 }
-#endif
+
+bool Directory::Create_r(const char* path)
+{
+	mode_t old_mask = umask(0);
+	bool ret = xfutil::Create_r(path);
+	umask(old_mask);
+	return ret;
+}
 
 bool Directory::Remove(const char* path)
 {

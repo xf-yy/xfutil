@@ -98,21 +98,56 @@ uint32_t StrView::GetPrefixLength(const StrView& str) const
 	return min_len;
 }
 
+void StrView::TrimLeft()
+{
+	const char* ptr = data;
+
+	size_t skip;
+	for(skip = 0; skip < size; ++skip, ++ptr)
+	{
+		if(*ptr > ' ') break;
+	}
+	data += skip;
+	size -= skip;
+}
+
+void StrView::TrimRight()
+{
+	const char* last = data + size - 1;
+
+	size_t skip;
+	for(skip = 0; skip < size; ++skip, --last)
+	{
+		if(*last > ' ') break;
+	}
+
+	size -= skip;
+}
+
 std::string TrimLeft(const std::string& value)
 {
-    auto pos = value.find_first_not_of(" \n\r\t");
-    if(pos == std::string::npos)
-    {
-        return value;
-    }
-    return value.substr(pos);
+	const char* ptr = value.data();
+
+	size_t skip;
+	for(skip = 0; skip < value.size(); ++skip, ++ptr)
+	{
+		if(*ptr > ' ') break;
+	}
+
+    return value.substr(skip);
 }
 
 std::string TrimRight(const std::string& value)
 {
-    auto pos = value.find_last_not_of(" \n\r\t");
-    return value.substr(0, pos+1);
+	const char* last = value.data() + value.size() - 1;
 
+	size_t skip;
+	for(skip = 0; skip < value.size(); ++skip, --last)
+	{
+		if(*last > ' ') break;
+	}
+
+    return value.substr(0, value.size() - skip);
 }
 
 } 

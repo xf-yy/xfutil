@@ -160,30 +160,12 @@ struct StrView
 	size_t size;
 
 public:
-	StrView()
+	void Init()
 	{
 		data = "";
 		size = 0;
 	}
 
-	explicit StrView(const char* data_)
-	{
-        Set(data_, strlen(data_));
-	}
-
-	explicit StrView(const char* data_, size_t size_)
-	{
-        Set(data_, size_);
-	}
-	
-	explicit StrView(const String& str)
-	{
-        Set(str.Data(), str.Size());
-	}
-	explicit StrView(const std::string& str)
-	{
-        Set(str.data(), str.size());
-	}
 public:
 	inline const char* Data() const 
 	{
@@ -226,6 +208,11 @@ public:
 		data = str.Data();
 		size = str.Size();
 	}
+	inline void Set(const std::string& str)
+	{
+		data = str.data();
+		size = str.size();
+	}	
 	inline void Skip(size_t n) 
 	{
 		assert(n <= size);
@@ -247,7 +234,9 @@ public:
 	{
 		return (size != dst.size) || (memcmp(data, dst.data, dst.size) != 0);
 	}
-	
+	void TrimLeft();
+	void TrimRight();
+
 	bool StartWith(const StrView& str) const 
 	{
 		return ((size >= str.size) && (memcmp(data, str.data, str.size) == 0));
@@ -259,6 +248,14 @@ public:
 	uint32_t GetPrefixLength(const StrView& str) const;
 
 };
+
+//测试
+#ifdef _DEBUG
+union StrViewTest
+{
+	StrView str;
+};
+#endif
 
 std::string TrimLeft(const std::string& value);
 std::string TrimRight(const std::string& value);

@@ -46,8 +46,6 @@ typedef signed long int64_t;
 typedef int fd_t;
 #define INVALID_FD ((fd_t)-1)
 
-typedef uint64_t second_t;
-
 #define	LastError	errno
 
 #else
