@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ***************************************************************************/
 
-#ifndef __xfutil_file_watcher_h__
-#define __xfutil_file_watcher_h__
+#ifndef __xfutil_file_notify_h__
+#define __xfutil_file_notify_h__
 
 #include <string>
 #include <mutex>
@@ -29,18 +29,18 @@ namespace xfutil
 
 typedef void (*HandleNotifyCallback)(const char* file_path, uint32_t events, void* arg);
 
-class FileWatcher
+class FileNotify
 {
 public:
-	FileWatcher(HandleNotifyCallback cb, void* arg);
-	~FileWatcher();
+	FileNotify(HandleNotifyCallback cb, void* arg);
+	~FileNotify();
 	
 public: 
 	bool Add(const std::string& path, uint32_t events, bool created_if_missing = true);
 	void Remove(const std::string& path);
     void RemoveAll();
 
-    int Watch(uint32_t timeout_ms);
+    int Read(uint32_t timeout_ms);
 
 public:
 	static const int FE_CREATE;

@@ -11,7 +11,7 @@ namespace xfutil
 namespace aio
 {
 
-enum AioStatus
+enum AioState
 {
 	AIO_STOPPED = 0,
 	AIO_STARTING,
@@ -19,7 +19,7 @@ enum AioStatus
 	AIO_STOPPING,
 };
 
-static std::atomic<AioStatus> s_state(AIO_STOPPED);
+static std::atomic<AioState> s_state(AIO_STOPPED);
 
 static std::atomic<uint64_t> s_reqid(1);
 static BlockingQueue<RequestEx>* s_io_request_queues = nullptr;
@@ -116,8 +116,8 @@ static void PIOProcThreadFunc(int index, void* arg)
 
 int Start(int io_threadnum/* = -1*/, int pio_threadnum/* = -2*/)
 {
-	AioStatus exp_status = AIO_STOPPED;
-	if(!s_state.compare_exchange_strong(exp_status, AIO_STARTING))
+	AioState exp_state = AIO_STOPPED;
+	if(!s_state.compare_exchange_strong(exp_state, AIO_STARTING))
 	{
 		return -1;
 	}
@@ -141,8 +141,8 @@ int Start(int io_threadnum/* = -1*/, int pio_threadnum/* = -2*/)
 
 int Stop()
 {
-	AioStatus exp_status = AIO_STARTED;
-	if(!s_state.compare_exchange_strong(exp_status, AIO_STOPPING))
+	AioState exp_state = AIO_STARTED;
+	if(!s_state.compare_exchange_strong(exp_state, AIO_STOPPING))
 	{
 		return -1;
 	}

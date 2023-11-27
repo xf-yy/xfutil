@@ -15,7 +15,7 @@ limitations under the License.
 ***************************************************************************/
 
 #include "xfutil/file.h"
-#include "xfutil/file_watcher.h"
+#include "xfutil/file_notify.h"
 #include "xfutil/strutil.h"
 #include "xfutil/buffer.h"
 #ifdef __linux__
@@ -30,19 +30,19 @@ enum {IBUF_SIZE = 4096};
 namespace xfutil 
 {
 
-const int FileWatcher::FE_CREATE = IN_CREATE;
-const int FileWatcher::FE_OPEN = IN_OPEN;
-const int FileWatcher::FE_CLOSE = IN_CLOSE;
-const int FileWatcher::FE_DELETE = IN_DELETE|IN_MOVED_FROM;
-const int FileWatcher::FE_RENAME = IN_MOVED_TO;
-const int FileWatcher::FE_MODIFY = IN_MODIFY;
+const int FileNotify::FE_CREATE = IN_CREATE;
+const int FileNotify::FE_OPEN = IN_OPEN;
+const int FileNotify::FE_CLOSE = IN_CLOSE;
+const int FileNotify::FE_DELETE = IN_DELETE|IN_MOVED_FROM;
+const int FileNotify::FE_RENAME = IN_MOVED_TO;
+const int FileNotify::FE_MODIFY = IN_MODIFY;
 
-FileWatcher::FileWatcher(HandleNotifyCallback cb, void* arg) : m_cb(cb), m_arg(arg)
+FileNotify::FileNotify(HandleNotifyCallback cb, void* arg) : m_cb(cb), m_arg(arg)
 {
 	m_ifd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
 }
 
-FileWatcher::~FileWatcher()
+FileNotify::~FileNotify()
 {
 	RemoveAll();
 	if(m_ifd != INVALID_FD)
@@ -51,7 +51,7 @@ FileWatcher::~FileWatcher()
 	}
 }
 
-bool FileWatcher::Add(const std::string& path, uint32_t events, bool created_if_missing/* = true*/)
+bool FileNotify::Add(const std::string& path, uint32_t events, bool created_if_missing/* = true*/)
 {
 	assert(m_ifd == INVALID_FD);
 	if(m_ifd != INVALID_FD)
@@ -88,7 +88,7 @@ bool FileWatcher::Add(const std::string& path, uint32_t events, bool created_if_
     return true;
 }
 
-void FileWatcher::Remove(const std::string& path)
+void FileNotify::Remove(const std::string& path)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     auto it = m_wfds.find(path);
@@ -100,7 +100,7 @@ void FileWatcher::Remove(const std::string& path)
     }
 }
 
-void FileWatcher::RemoveAll()
+void FileNotify::RemoveAll()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     for(auto it = m_wfds.begin(); it != m_wfds.end(); ++it)
@@ -111,7 +111,7 @@ void FileWatcher::RemoveAll()
     m_paths.clear();
 }
 
-int FileWatcher::Select(int fd, int events, uint32_t timeout_ms)
+int FileNotify::Select(int fd, int events, uint32_t timeout_ms)
 {
     int ret;
     for(;;)
@@ -136,10 +136,10 @@ int FileWatcher::Select(int fd, int events, uint32_t timeout_ms)
         }
         else if(ret == 0)
         {
-            //errno = ERR_TIMEOUT;
+            //LastError = ERR_TIMEOUT;
             break;
         }
-        else if(errno != EINTR)
+        else if(LastError != EINTR)
         {
             break;
         }
@@ -147,7 +147,7 @@ int FileWatcher::Select(int fd, int events, uint32_t timeout_ms)
     return ret;
 }
 
-std::string FileWatcher::GetPath(int wfd)
+std::string FileNotify::GetPath(int wfd)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     auto it = m_paths.find(wfd);
@@ -158,7 +158,7 @@ std::string FileWatcher::GetPath(int wfd)
     return std::string();
 }
 
-void FileWatcher::Handle(char* buf, char* end)
+void FileNotify::Handle(char* buf, char* end)
 {
     char path[MAX_PATH_LEN];
     while(buf < end)
@@ -174,7 +174,7 @@ void FileWatcher::Handle(char* buf, char* end)
     }
 }
 
-int FileWatcher::Watch(uint32_t timeout_ms)
+int FileNotify::Read(uint32_t timeout_ms)
 {
     char buf[IBUF_SIZE];
 
@@ -187,7 +187,7 @@ int FileWatcher::Watch(uint32_t timeout_ms)
         }
         else if(rsize < 0)
         {
-            if(errno == EAGAIN)
+            if(LastError == EAGAIN)
             {
                 int events = Select(m_ifd, POLLIN | POLLPRI, timeout_ms);
                 if(events <= 0)
@@ -195,7 +195,7 @@ int FileWatcher::Watch(uint32_t timeout_ms)
                     return events;
                 }
             }
-            else if(errno != EINTR)
+            else if(LastError != EINTR)
             {
                 return -1;
             }
