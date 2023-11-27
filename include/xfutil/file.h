@@ -136,7 +136,7 @@ public:
 	}
 	static inline bool Remove(const char *filepath)
 	{
-		return unlink(filepath) == 0 || errno == ENOENT;
+		return unlink(filepath) == 0 || LastError == ENOENT;
 	}
 	static inline bool Rename(const char *src_filepath, const char *dst_filepath)
 	{
