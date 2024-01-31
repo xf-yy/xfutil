@@ -28,7 +28,7 @@ typedef void (*ExitFunc)(void);
 class Process
 {
 public:
-	static inline pid_t GetPid()
+	static inline pid_t GetPID()
 	{
 		return getpid();
 	}

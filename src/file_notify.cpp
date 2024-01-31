@@ -45,7 +45,7 @@ FileNotify::FileNotify(HandleNotifyCallback cb, void* arg) : m_cb(cb), m_arg(arg
 FileNotify::~FileNotify()
 {
 	RemoveAll();
-	if(m_ifd != INVALID_FD)
+	if(m_ifd != INVALID_FILEID)
 	{
 		close(m_ifd);
 	}
@@ -53,8 +53,8 @@ FileNotify::~FileNotify()
 
 bool FileNotify::Add(const std::string& path, uint32_t events, bool created_if_missing/* = true*/)
 {
-	assert(m_ifd == INVALID_FD);
-	if(m_ifd != INVALID_FD)
+	assert(m_ifd == INVALID_FILEID);
+	if(m_ifd != INVALID_FILEID)
 	{
 		return false;
 	}
@@ -79,7 +79,7 @@ bool FileNotify::Add(const std::string& path, uint32_t events, bool created_if_m
     }
 
 	int wfd = inotify_add_watch(m_ifd, path.c_str(), events);
-	if(wfd == INVALID_FD)
+	if(wfd == INVALID_FILEID)
     {
         return false;
     }

@@ -60,7 +60,7 @@ public:
 	{
 		std::this_thread::yield();
 	}
-	static inline pid_t GetTid()
+	static inline pid_t GetTID()
 	{
 		return syscall(SYS_gettid);
 	}

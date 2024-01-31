@@ -37,6 +37,19 @@ uint64_t GetTickTime();
 //获取系统启动时间，单位毫秒
 uint64_t GetTickMilliTime();
 
+
+//将"hh:mm::ss"格式的时间串转换成整数（非时间秒数）
+uint32_t ParseTime(char* buf, int buf_len);
+//"yyyy-mm-dd" -> 整数
+uint32_t ParseDate(char* buf, int buf_len);
+//"yyyy-mm-dd hh:mm:ss" ->整数
+uint64_t ParseDateTime(char* buf, int buf_len);
+
+//将整数（非时间秒数）转换为时间格式
+int FormatTime(char* buf, int buf_len, uint32_t t);
+int FormatDate(char* buf, int buf_len, uint32_t d);
+int FormatDateTime(char* buf, int buf_len, uint64_t dt);
+
 }
 
 #endif

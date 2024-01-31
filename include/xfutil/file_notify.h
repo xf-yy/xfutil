@@ -61,7 +61,7 @@ private:
     HandleNotifyCallback m_cb;
     void* m_arg;
 
-	fd_t m_ifd;
+	fileid_t m_ifd;
 
 	std::mutex m_mutex;
     std::map<std::string, int> m_wfds;

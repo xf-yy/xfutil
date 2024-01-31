@@ -58,15 +58,15 @@ public:
     // 移动构造函数
     File(File&& other)
     {
-        m_fd = other.m_fd;
-        other.m_fd = INVALID_FD;
+        m_fid = other.m_fid;
+        other.m_fid = INVALID_FILEID;
     }    
 	~File();
 	
 public:	
-	inline fd_t GetFD()
+	inline fileid_t GetID()
 	{
-		return m_fd;
+		return m_fid;
 	}
 
     //
@@ -85,26 +85,26 @@ public:
 
 	inline bool Sync()
 	{
-		return fsync(m_fd) == 0;
+		return fsync(m_fid) == 0;
 	}
 	inline bool Truncate(size_t new_size)
 	{
-		return ftruncate(m_fd, new_size) == 0;
+		return ftruncate(m_fid, new_size) == 0;
 	}
 	inline bool Allocate(size_t size)
 	{
-		return fallocate(m_fd, 0, 0, size);
+		return fallocate(m_fid, 0, 0, size);
 	}
 	
 	inline bool Seek(int64_t offset)
 	{
-		return lseek(m_fd, offset, SEEK_SET);
+		return lseek(m_fid, offset, SEEK_SET);
 	}
 	
 	inline int64_t Size() const
 	{
 		struct stat st;
-		return (fstat(m_fd, &st) == 0) ? st.st_size : -1;
+		return (fstat(m_fid, &st) == 0) ? st.st_size : -1;
 	}
 	static inline int64_t Size(const char* path)
 	{
@@ -119,15 +119,15 @@ public:
 
 	inline bool TryLockRead()
 	{
-		return flock(m_fd, LOCK_SH|LOCK_NB) == 0;
+		return flock(m_fid, LOCK_SH|LOCK_NB) == 0;
 	}
 	inline bool TryLockWrite()
 	{
-		return flock(m_fd, LOCK_NB|LOCK_EX) == 0;
+		return flock(m_fid, LOCK_NB|LOCK_EX) == 0;
 	}    
 	inline bool Unlock()
 	{
-		return flock(m_fd, LOCK_UN) == 0;
+		return flock(m_fid, LOCK_UN) == 0;
 	}
 	
 	static inline bool Exist(const char *filepath)
@@ -155,7 +155,7 @@ public:
     static const int OF_DIRECT;
 
 protected:
-	fd_t m_fd;
+	fileid_t m_fid;
 	
 private:
 	File(const File&) = delete;

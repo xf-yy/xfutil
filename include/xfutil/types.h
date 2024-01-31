@@ -43,13 +43,13 @@ typedef signed int int32_t;
 typedef unsigned long uint64_t;
 typedef signed long int64_t;
 
-typedef int fd_t;
-#define INVALID_FD ((fd_t)-1)
+typedef int fileid_t;
+#define INVALID_FILEID ((fileid_t)-1)
 
 #define	LastError	errno
 
 #else
-#error "not suppot this platform"
+
 #define LastError	GetLastError()
 #endif
 
