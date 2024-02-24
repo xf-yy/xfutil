@@ -114,69 +114,6 @@ bool Directory::Remove(const char* path)
 	return true;
 }
 
-bool Directory::List(const char* path, const char* pattern, ListCallback cb, void* arg)
-{
-	assert(cb != nullptr);
-
-	DIR* dir = opendir(path);
-	if(dir == nullptr)
-	{
-		return false;
-	}
-	struct dirent* entry;
-	while((entry=readdir(dir)) != nullptr)
-	{
-		if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
-		{
-			continue;
-		}
-		int ret = fnmatch(pattern, entry->d_name, 0);//PathMatchSpecW
-		if(ret == 0)
-		{
-			cb(path, entry->d_name, arg);
-		}
-	}
-	
-	closedir(dir);
-	return true;
-}
-
-bool Directory::Find(const char* path, const char* pattern, ListCallback cb, void* arg)
-{
-	assert(cb != nullptr);
-
-	DIR* dir = opendir(path);
-	if(dir == nullptr)
-	{
-		return false;
-	}
-	struct dirent* entry;
-	while((entry=readdir(dir)) != nullptr)
-	{
-		if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
-		{
-			continue;
-		}
-		char full_path[MAX_PATH_LEN];
-		Path::CombineEx(full_path, sizeof(full_path), path, entry->d_name);
-		
-		struct stat st;
-		if(stat(full_path, &st) == 0 && S_ISDIR(st.st_mode))
-		{
-			Find(full_path, pattern, cb, arg);
-		}
-		
-		int ret = fnmatch(pattern, entry->d_name, 0);//PathMatchSpecW
-		if(ret == 0)
-		{			
-			cb(full_path, entry->d_name, arg);
-		}
-	}
-	
-	closedir(dir);
-	return true;
-}
-
 
 }  
 

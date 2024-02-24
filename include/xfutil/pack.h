@@ -92,7 +92,7 @@ public:
 
 private:
     BufferPoolPtr m_block_buffer_pool;
-    Buffer* m_block_buf;          //当前正在写的buf
+    BufferItem* m_block_buf;          //当前正在写的buf
     byte_t* m_ptr;
 
 private:

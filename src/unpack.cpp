@@ -33,7 +33,7 @@ Unpacker::Unpacker(BufferPoolPtr& buf_list) : m_block_buffer_pool(buf_list)
 
 bool Unpacker::NextBlock()
 {
-    const auto bufs = m_block_buffer_pool->BlockBuffers();
+    const auto bufs = m_block_buffer_pool->AllocatedBuffers();
     if(++m_block_buffer_idx >= (ssize_t)bufs.size())
     {
         m_buf_end = (byte_t*)"";
@@ -41,7 +41,7 @@ bool Unpacker::NextBlock()
         return false;
     }
 
-    const Buffer& buf = bufs[m_block_buffer_idx];
+    const BufferItem& buf = bufs[m_block_buffer_idx];
     m_ptr = buf.buf;
     m_buf_end = buf.buf + buf.size;
     return true;

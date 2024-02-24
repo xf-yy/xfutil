@@ -20,16 +20,14 @@ limitations under the License.
 namespace xfutil
 {
 
-WriteBuffer::WriteBuffer(BlockPool& pool)
-	: m_large_pool(pool)
+WriteBuffer::WriteBuffer(BlockPool* pool) : m_block_pool(pool)
 {
-	assert(m_large_pool.BlockSize() >= 1024);
-	m_blocks.reserve(32);
-	m_bufs.reserve(32);
-	m_usage = 0;
-	
 	m_ptr = nullptr;
 	m_size = 0;
+
+	m_usage = 0;
+	m_blocks.reserve(16);
+	m_bufs.reserve(16);
 }
 
 WriteBuffer::~WriteBuffer() 
@@ -39,9 +37,12 @@ WriteBuffer::~WriteBuffer()
 
 void WriteBuffer::Clear()
 {
+	m_ptr = nullptr;
+	m_size = 0;
+
 	for(size_t i = 0; i < m_blocks.size(); i++) 
 	{
-		m_large_pool.Free(m_blocks[i]);
+		m_block_pool->Free(m_blocks[i]);
 	}
 	m_blocks.clear();
 	
@@ -53,13 +54,28 @@ void WriteBuffer::Clear()
 	
 	m_usage = 0;
 	
-	m_ptr = nullptr;
-	m_size = 0;
 }
 
 byte_t* WriteBuffer::Write(uint32_t size) 
 {
-	if(size >= m_large_pool.BlockSize()/2)
+	if(m_size >= size)
+	{
+		byte_t* ptr = m_ptr;
+		m_ptr += size;
+		m_size -= size;
+
+		return ptr;
+	}
+	return LargeWrite(size);
+}
+
+byte_t* WriteBuffer::LargeWrite(uint32_t size) 
+{
+	assert(size > m_size);
+
+	const uint32_t BLOCK_SIZE = (m_block_pool != nullptr) ? m_block_pool->BlockSize() : 8192;
+
+	if(size > BLOCK_SIZE/2)
 	{
 		byte_t* ptr = xmalloc(size);
 		m_bufs.push_back(ptr);
@@ -68,15 +84,18 @@ byte_t* WriteBuffer::Write(uint32_t size)
 		return ptr;
 	}
 	
-	if(m_size < size)
+	if(m_block_pool != nullptr)
 	{
-		byte_t* ptr = m_large_pool.Alloc();
-		m_blocks.push_back(ptr);
-		m_usage += m_large_pool.BlockSize();
-		
-		m_ptr = (byte_t*)ptr;
-		m_size = m_large_pool.BlockSize();
+		m_ptr = m_block_pool->Alloc();
+		m_blocks.push_back(m_ptr);
 	}
+	else
+	{
+		m_ptr = xmalloc(size);
+		m_bufs.push_back(m_ptr);
+	}
+	m_usage += BLOCK_SIZE;
+	m_size = BLOCK_SIZE;
 	
 	byte_t* ptr = m_ptr;
 	m_ptr += size;
@@ -85,11 +104,11 @@ byte_t* WriteBuffer::Write(uint32_t size)
 	return ptr;
 }
 
-BufferPool::BufferPool(BlockPool& block_pool)
-	: m_block_pool(block_pool)
+
+BufferPool::BufferPool(BlockPool& block_pool) : m_block_pool(block_pool)
 {
 	assert(m_block_pool.BlockSize() >= 1024);
-	m_bufs.reserve(32);
+	m_bufs.reserve(16);
 }
 
 BufferPool::~BufferPool() 
@@ -101,7 +120,7 @@ void BufferPool::Free()
 {
 	for(size_t i = 0; i < m_bufs.size(); ++i) 
 	{
-        Buffer& buf = m_bufs[i];
+        BufferItem& buf = m_bufs[i];
         if(buf.capacity == m_block_pool.BlockSize())
         {
             m_block_pool.Free(buf.buf);
@@ -114,9 +133,9 @@ void BufferPool::Free()
 	m_bufs.clear();
 }
 
-Buffer* BufferPool::Alloc(uint32_t size) 
+BufferItem* BufferPool::Alloc(uint32_t size) 
 {
-    Buffer buf;
+    BufferItem buf;
     buf.size = 0;
 
 	if(size <= m_block_pool.BlockSize())

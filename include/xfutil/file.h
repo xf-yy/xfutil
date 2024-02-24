@@ -117,11 +117,11 @@ public:
 		return (stat(path, &st) == 0) ? st.st_mtime : 0;
 	}
 
-	inline bool TryLockRead()
+	inline bool TryReadLock()
 	{
-		return flock(m_fid, LOCK_SH|LOCK_NB) == 0;
+		return flock(m_fid, LOCK_NB|LOCK_SH) == 0;
 	}
-	inline bool TryLockWrite()
+	inline bool TryWriteLock()
 	{
 		return flock(m_fid, LOCK_NB|LOCK_EX) == 0;
 	}    

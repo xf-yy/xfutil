@@ -28,11 +28,15 @@ namespace xfutil
 #define MAX_PATH_LEN	256	//包含结束符'\0'
 #endif
 
+#ifdef __linux__
 #define PATH_SEPARATOR	'/'
+#endif
 
 class Path
 {
 public:
+	typedef int (*ListCallback)(const char* dirname, const char* filename, void* arg);
+
 	static const char* GetFileName(const char* path)
     {
         const char* name = strrchr(path, '/');
@@ -82,10 +86,22 @@ public:
 	static AddFileName();
 	static Append();
 	static GetTempDirPath(char* buf, int buf_len);
-	static GetWorkPath(char* buf, int buf_len);
-	static SetWorkPath(char* path);
 	#endif
+
+	static bool GetWorkPath(char* buf, int buf_size)
+	{
+		return (getcwd(buf, buf_size) != nullptr);
+	}
+	static bool SetWorkPath(const char* path)
+	{
+		return (chdir(path) == 0);
+	}
 	
+	//一层遍历
+	static bool List(const char* path, const char* pattern, ListCallback cb, void* arg);
+	//多层遍历
+	static bool Find(const char* path, const char* pattern, ListCallback cb, void* arg);
+
 private:	
 	Path(const Path&) = delete;
 	Path& operator=(const Path&) = delete;

@@ -26,8 +26,6 @@ limitations under the License.
 namespace xfutil 
 {
 
-typedef int (*ListCallback)(const char* dirname, const char* filename, void* arg);
-
 class Directory
 {
 public:	
@@ -49,19 +47,6 @@ public:
 		return (stat(path, &st) == 0) && S_ISDIR(st.st_mode);
 	}
 	
-	static bool GetWorkPath(char* buf, int buf_size)
-	{
-		return (getcwd(buf, buf_size) != nullptr);
-	}
-	static bool SetWorkPath(const char* path)
-	{
-		return (chdir(path) == 0);
-	}
-	
-	//一层遍历
-	static bool List(const char* path, const char* pattern, ListCallback cb, void* arg);
-	//多层遍历
-	static bool Find(const char* path, const char* pattern, ListCallback cb, void* arg);
 };
 
 

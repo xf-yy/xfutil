@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ***************************************************************************/
 
-#ifndef __xfutil_file_notify_h__
-#define __xfutil_file_notify_h__
+#ifndef __xfutil_file_watcher_h__
+#define __xfutil_file_watcher_h__
 
 #include <string>
 #include <mutex>
@@ -27,20 +27,12 @@ limitations under the License.
 namespace xfutil 
 {
 
-typedef void (*HandleNotifyCallback)(const char* file_path, uint32_t events, void* arg);
 
-class FileNotify
+class FileWatcher
 {
 public:
-	FileNotify(HandleNotifyCallback cb, void* arg);
-	~FileNotify();
-	
-public: 
-	bool Add(const std::string& path, uint32_t events, bool created_if_missing = true);
-	void Remove(const std::string& path);
-    void RemoveAll();
-
-    int Read(uint32_t timeout_ms);
+	FileWatcher();
+	~FileWatcher();
 
 public:
 	static const int FE_CREATE;
@@ -50,21 +42,25 @@ public:
 	static const int FE_RENAME;
 	static const int FE_MODIFY;
 
+	typedef void (*EventCallback)(const char* file_path, uint32_t events, void* arg);
+	
+public: 
+	bool Add(const std::string& path, uint32_t events);
+
+    int Read(uint32_t timeout_ms, EventCallback cb, void* arg = nullptr);
+
 private:
-    void Handle(char* buf, char* end);
-    std::string GetPath(int wfd);
+    void RemoveAll();
+    void HandleEvent(char* buf, char* end, EventCallback cb, void* arg = nullptr);
+    bool GetFilePath(int wfd, const char* file_name, char* file_path, uint32_t file_path_size);
 
     //-1表示错误，0表示超时，正数表示事件
     static int Select(int fd, int events, uint32_t timeout_ms);
 
 private:
-    HandleNotifyCallback m_cb;
-    void* m_arg;
-
 	fileid_t m_ifd;
 
 	std::mutex m_mutex;
-    std::map<std::string, int> m_wfds;
     std::map<int, std::string> m_paths;
 };
 

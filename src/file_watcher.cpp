@@ -15,7 +15,7 @@ limitations under the License.
 ***************************************************************************/
 
 #include "xfutil/file.h"
-#include "xfutil/file_notify.h"
+#include "xfutil/file_watcher.h"
 #include "xfutil/strutil.h"
 #include "xfutil/buffer.h"
 #ifdef __linux__
@@ -30,19 +30,19 @@ enum {IBUF_SIZE = 4096};
 namespace xfutil 
 {
 
-const int FileNotify::FE_CREATE = IN_CREATE;
-const int FileNotify::FE_OPEN = IN_OPEN;
-const int FileNotify::FE_CLOSE = IN_CLOSE;
-const int FileNotify::FE_DELETE = IN_DELETE|IN_MOVED_FROM;
-const int FileNotify::FE_RENAME = IN_MOVED_TO;
-const int FileNotify::FE_MODIFY = IN_MODIFY;
+const int FileWatcher::FE_CREATE = IN_CREATE;
+const int FileWatcher::FE_OPEN = IN_OPEN;
+const int FileWatcher::FE_CLOSE = IN_CLOSE;
+const int FileWatcher::FE_DELETE = IN_DELETE|IN_MOVED_FROM;
+const int FileWatcher::FE_RENAME = IN_MOVED_TO;
+const int FileWatcher::FE_MODIFY = IN_MODIFY;
 
-FileNotify::FileNotify(HandleNotifyCallback cb, void* arg) : m_cb(cb), m_arg(arg)
+FileWatcher::FileWatcher()
 {
 	m_ifd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
 }
 
-FileNotify::~FileNotify()
+FileWatcher::~FileWatcher()
 {
 	RemoveAll();
 	if(m_ifd != INVALID_FILEID)
@@ -51,7 +51,7 @@ FileNotify::~FileNotify()
 	}
 }
 
-bool FileNotify::Add(const std::string& path, uint32_t events, bool created_if_missing/* = true*/)
+bool FileWatcher::Add(const std::string& path, uint32_t events)
 {
 	assert(m_ifd == INVALID_FILEID);
 	if(m_ifd != INVALID_FILEID)
@@ -61,57 +61,31 @@ bool FileNotify::Add(const std::string& path, uint32_t events, bool created_if_m
 
 	if(!Directory::Exist(path.c_str()))
 	{
-		if(!created_if_missing)
-		{
-			return false;
-		}
-		if(!Directory::Create(path.c_str()))
-		{
-			return false;
-		}
+		return false;
 	}
 
     std::lock_guard<std::mutex> lock(m_mutex);
-	auto it = m_wfds.find(path);
-    if(it != m_wfds.end())
-    {
-        return false;
-    }
 
 	int wfd = inotify_add_watch(m_ifd, path.c_str(), events);
 	if(wfd == INVALID_FILEID)
     {
         return false;
     }
-    m_wfds[path] = wfd;
     m_paths[wfd] = path;
     return true;
 }
 
-void FileNotify::Remove(const std::string& path)
+void FileWatcher::RemoveAll()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    auto it = m_wfds.find(path);
-    if(it != m_wfds.end())
+    for(auto it = m_paths.begin(); it != m_paths.end(); ++it)
     {
-        inotify_rm_watch (m_ifd, it->second);
-        m_paths.erase(it->second);
-        m_wfds.erase(it);
+        inotify_rm_watch (m_ifd, it->first);
     }
-}
-
-void FileNotify::RemoveAll()
-{
-    std::lock_guard<std::mutex> lock(m_mutex);
-    for(auto it = m_wfds.begin(); it != m_wfds.end(); ++it)
-    {
-        inotify_rm_watch (m_ifd, it->second);
-    }
-    m_wfds.clear();
     m_paths.clear();
 }
 
-int FileNotify::Select(int fd, int events, uint32_t timeout_ms)
+int FileWatcher::Select(int fd, int events, uint32_t timeout_ms)
 {
     int ret;
     for(;;)
@@ -147,18 +121,21 @@ int FileNotify::Select(int fd, int events, uint32_t timeout_ms)
     return ret;
 }
 
-std::string FileNotify::GetPath(int wfd)
+bool FileWatcher::GetFilePath(int wfd, const char* file_name, char* file_path, uint32_t file_path_size)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
+
     auto it = m_paths.find(wfd);
     if(it != m_paths.end())
     {
-        return it->second;
+        Path::Combine(file_path, file_path_size, it->second.c_str(), file_name);   
+        return true;
     }
-    return std::string();
+
+    return false;
 }
 
-void FileNotify::Handle(char* buf, char* end)
+void FileWatcher::HandleEvent(char* buf, char* end, EventCallback cb, void* arg/* = nullptr*/)
 {
     char path[MAX_PATH_LEN];
     while(buf < end)
@@ -167,15 +144,17 @@ void FileNotify::Handle(char* buf, char* end)
         buf += sizeof(struct inotify_event) + ev->len;
 
         //根据ev->wd获取其path
-        std::string wpath = GetPath(ev->wd);
-        Path::Combine(path, sizeof(path), wpath.c_str(), ev->name);   
-
-        m_cb(path, ev->mask, m_arg);     
+        if(GetFilePath(ev->wd, ev->name, path, sizeof(path)))
+        {
+            cb(path, ev->mask, arg);     
+        }
     }
 }
 
-int FileNotify::Read(uint32_t timeout_ms)
+int FileWatcher::Read(uint32_t timeout_ms, EventCallback cb, void* arg/* = nullptr*/)
 {
+    assert(cb != nullptr);
+
     char buf[IBUF_SIZE];
 
     for(;;)
@@ -183,7 +162,7 @@ int FileNotify::Read(uint32_t timeout_ms)
         ssize_t rsize = read(m_ifd, buf, IBUF_SIZE);
         if(rsize > 0)
         {
-            Handle(buf, buf+rsize);
+            HandleEvent(buf, buf+rsize, cb, arg);
         }
         else if(rsize < 0)
         {
