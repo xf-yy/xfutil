@@ -20,15 +20,18 @@ limitations under the License.
 namespace xfutil
 {
 
-WriteBuffer::WriteBuffer(BlockPool* pool) : m_block_pool(pool)
+WriteBuffer::WriteBuffer(BlockPool* pool) : m_block_pool(pool), m_block_size(pool->BlockSize())
 {
-	m_ptr = nullptr;
-	m_size = 0;
-
-	m_usage = 0;
 	m_blocks.reserve(16);
 	m_bufs.reserve(16);
 }
+
+WriteBuffer::WriteBuffer(uint32_t block_size) : m_block_pool(nullptr), m_block_size(block_size)
+{
+	m_blocks.reserve(16);
+	m_bufs.reserve(16);
+}
+
 
 WriteBuffer::~WriteBuffer() 
 {
@@ -73,9 +76,7 @@ byte_t* WriteBuffer::LargeWrite(uint32_t size)
 {
 	assert(size > m_size);
 
-	const uint32_t BLOCK_SIZE = (m_block_pool != nullptr) ? m_block_pool->BlockSize() : 8192;
-
-	if(size > BLOCK_SIZE/2)
+	if(size > m_block_size/2)
 	{
 		byte_t* ptr = xmalloc(size);
 		m_bufs.push_back(ptr);
@@ -94,8 +95,8 @@ byte_t* WriteBuffer::LargeWrite(uint32_t size)
 		m_ptr = xmalloc(size);
 		m_bufs.push_back(m_ptr);
 	}
-	m_usage += BLOCK_SIZE;
-	m_size = BLOCK_SIZE;
+	m_usage += m_block_size;
+	m_size = m_block_size;
 	
 	byte_t* ptr = m_ptr;
 	m_ptr += size;
@@ -105,55 +106,55 @@ byte_t* WriteBuffer::LargeWrite(uint32_t size)
 }
 
 
-BufferPool::BufferPool(BlockPool& block_pool) : m_block_pool(block_pool)
+BlockBuffer::BlockBuffer(BlockPool& block_pool) : m_block_pool(block_pool)
 {
 	assert(m_block_pool.BlockSize() >= 1024);
-	m_bufs.reserve(16);
+	m_blocks.reserve(16);
 }
 
-BufferPool::~BufferPool() 
+BlockBuffer::~BlockBuffer() 
 {
 	Free();
 }
 
-void BufferPool::Free()
+void BlockBuffer::Free()
 {
-	for(size_t i = 0; i < m_bufs.size(); ++i) 
+	for(size_t i = 0; i < m_blocks.size(); ++i) 
 	{
-        BufferItem& buf = m_bufs[i];
-        if(buf.capacity == m_block_pool.BlockSize())
+        Block& block = m_blocks[i];
+        if(block.capacity == m_block_pool.BlockSize())
         {
-            m_block_pool.Free(buf.buf);
+            m_block_pool.Free(block.buf);
         }
         else
         {
-            xfree(buf.buf);
+            xfree(block.buf);
         }
 	}
-	m_bufs.clear();
+	m_blocks.clear();
 }
 
-BufferItem* BufferPool::Alloc(uint32_t size) 
+Block* BlockBuffer::Alloc(uint32_t size) 
 {
-    BufferItem buf;
-    buf.size = 0;
+    Block block;
+    block.size = 0;
 
 	if(size <= m_block_pool.BlockSize())
 	{
-		buf.buf = m_block_pool.Alloc();
-        buf.capacity = m_block_pool.BlockSize();
+		block.buf = m_block_pool.Alloc();
+        block.capacity = m_block_pool.BlockSize();
     }
     else
     {
         size = ALIGN_UP(size, 4096);
 
-		buf.buf = xmalloc(size);
-		buf.capacity = size;
+		block.buf = xmalloc(size);
+		block.capacity = size;
 	}
 	
-    m_bufs.push_back(buf);
+    m_blocks.push_back(block);
 
-    return &m_bufs.back();
+    return &m_blocks.back();
 }
 
 } 

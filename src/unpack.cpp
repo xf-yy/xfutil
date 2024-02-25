@@ -25,7 +25,7 @@ using namespace xfutil;
 namespace xfutil
 {
 
-Unpacker::Unpacker(BufferPoolPtr& buf_list) : m_block_buffer_pool(buf_list)
+Unpacker::Unpacker(BlockBufferPtr& block_buf) : m_block_buffer(block_buf)
 {
     m_block_buffer_idx = -1;
     NextBlock();
@@ -33,17 +33,17 @@ Unpacker::Unpacker(BufferPoolPtr& buf_list) : m_block_buffer_pool(buf_list)
 
 bool Unpacker::NextBlock()
 {
-    const auto bufs = m_block_buffer_pool->AllocatedBuffers();
-    if(++m_block_buffer_idx >= (ssize_t)bufs.size())
+    const auto blocks = m_block_buffer->GetBlocks();
+    if(++m_block_buffer_idx >= (ssize_t)blocks.size())
     {
         m_buf_end = (byte_t*)"";
         m_ptr = m_buf_end;
         return false;
     }
 
-    const BufferItem& buf = bufs[m_block_buffer_idx];
-    m_ptr = buf.buf;
-    m_buf_end = buf.buf + buf.size;
+    const Block& block = blocks[m_block_buffer_idx];
+    m_ptr = block.buf;
+    m_buf_end = block.buf + block.size;
     return true;
 }
 

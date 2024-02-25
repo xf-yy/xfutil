@@ -29,7 +29,8 @@ class BlockPool;
 class WriteBuffer
 {
 public:
-	explicit WriteBuffer(BlockPool* pool = nullptr);
+	explicit WriteBuffer(BlockPool* pool);
+	explicit WriteBuffer(uint32_t block_size = 8*1024);
 	~WriteBuffer();
 	
 public:
@@ -56,12 +57,14 @@ public:
 private:
 	byte_t* LargeWrite(uint32_t size);
 
-private:	
+private:
 	BlockPool* m_block_pool;
-	byte_t* m_ptr;				//当前待分配的指针
-	uint32_t m_size;			//当前可用的空间大小
+	const uint32_t m_block_size;
+
+	byte_t* m_ptr = nullptr;		//当前待分配的指针
+	uint32_t m_size = 0;			//当前可用的空间大小
 	
-	uint64_t m_usage;
+	uint64_t m_usage = 0;
 	std::vector<byte_t*> m_blocks;
 	std::vector<byte_t*> m_bufs;
 
@@ -70,43 +73,43 @@ private:
 	WriteBuffer& operator=(const WriteBuffer&) = delete;
 };
 
-struct BufferItem
+struct Block
 {
     byte_t* buf;
     uint32_t capacity;
     uint32_t size;
 };
 
-class BufferPool
+class BlockBuffer
 {
 public:
-	explicit BufferPool(BlockPool& block_pool);
-	~BufferPool();
+	explicit BlockBuffer(BlockPool& block_pool);
+	~BlockBuffer();
 	
 public:
     //重新分配一个buffer，至少一个block大小
-    BufferItem* Alloc(uint32_t size);
+    Block* Alloc(uint32_t size);
 
 	//释放所有分配的空间
 	void Free();
 
     //获取已分配的buffer集
-    inline const std::vector<BufferItem>& AllocatedBuffers()
+    inline const std::vector<Block>& GetBlocks()
     {
-        return m_bufs;
+        return m_blocks;
     }
 
 private:	
 	BlockPool& m_block_pool;
-    std::vector<BufferItem> m_bufs;
+    std::vector<Block> m_blocks;
 	
 private:
-	BufferPool(const BufferPool&) = delete;
-	BufferPool& operator=(const BufferPool&) = delete;
+	BlockBuffer(const BlockBuffer&) = delete;
+	BlockBuffer& operator=(const BlockBuffer&) = delete;
 };
 
-typedef std::shared_ptr<BufferPool> BufferPoolPtr;
-#define NewBufferPool 	std::make_shared<BufferPool>
+typedef std::shared_ptr<BlockBuffer> BlockBufferPtr;
+#define NewBlockBuffer 	std::make_shared<BlockBuffer>
 
 
 }

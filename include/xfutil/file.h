@@ -42,13 +42,13 @@ struct FileTime
 };
 
 #ifdef _WIN32
-struct iovec_t
+struct iobuf_t
 {
     void  *iov_base;   
     size_t iov_len;  
 };
 #else
-typedef struct iovec iovec_t;
+typedef struct iovec iobuf_t;
 #endif
 
 class File
@@ -74,14 +74,14 @@ public:
 	void Close();
 	
 	int64_t Read(void* buf, size_t buf_size) const;
-	int64_t Read(iovec_t* iov, int iov_cnt) const;
     int64_t Read(uint64_t offset, void* buf, size_t buf_size) const;
-	int64_t Read(uint64_t offset, iovec_t* iov, int iov_cnt) const;
+	int64_t Read(iobuf_t* iobuf, int iobuf_cnt) const;
+	int64_t Read(uint64_t offset, iobuf_t* iobuf, int iobuf_cnt) const;
 
 	int64_t Write(const void* buf, size_t buf_size);
-	int64_t Write(iovec_t* iov, int iov_cnt);
 	int64_t Write(uint64_t offset, const void* buf, size_t buf_size);
-	int64_t Write(uint64_t offset, iovec_t* iov, int iov_cnt);
+	int64_t Write(iobuf_t* iobuf, int iobuf_cnt);
+	int64_t Write(uint64_t offset, iobuf_t* iobuf, int iobuf_cnt);
 
 	inline bool Sync()
 	{
@@ -132,7 +132,8 @@ public:
 	
 	static inline bool Exist(const char *filepath)
 	{
-		return access(filepath, F_OK) == 0;
+		struct stat st;
+		return (stat(filepath, &st) == 0) && S_ISREG(st.st_mode);
 	}
 	static inline bool Remove(const char *filepath)
 	{

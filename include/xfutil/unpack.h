@@ -31,7 +31,7 @@ typedef bool (*UnpackStructCallback)(Unpacker&, void* arg);
 class Unpacker
 {
 public:
-    Unpacker(BufferPoolPtr& buf_list);
+    Unpacker(BlockBufferPtr& block_buf);
     
 public:
     bool Unpack(bool& v)
@@ -97,7 +97,7 @@ private:
     bool NextBlock();
 
 private:
-    BufferPoolPtr m_block_buffer_pool;
+    BlockBufferPtr m_block_buffer;
 
     ssize_t m_block_buffer_idx;
     const byte_t* m_ptr;

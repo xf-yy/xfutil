@@ -33,14 +33,14 @@ struct Command
 {	
 	inline void Read(int fd, void *buf, size_t size);
 	inline void Read(int fd, uint64_t pos, void *buf, size_t size);
-	inline void Read(int fd, iovec *iov, int iovcnt);
-	inline void Read(int fd, uint64_t pos, iovec *iov, int iovcnt);
+	inline void Read(int fd, iovec *iobuf, int iovcnt);
+	inline void Read(int fd, uint64_t pos, iovec *iobuf, int iovcnt);
 	inline void ReadAhead(int fd, uint64_t pos, size_t size);
 
 	inline void Write(int fd, void *buf, size_t size);
 	inline void Write(int fd, uint64_t pos, void *buf, size_t size);
-	inline void Write(int fd, iovec *iov, int iovcnt);
-	inline void Write(int fd, uint64_t pos, iovec *iov, int iovcnt);
+	inline void Write(int fd, iovec *iobuf, int iovcnt);
+	inline void Write(int fd, uint64_t pos, iovec *iobuf, int iovcnt);
 
 	inline void Sync(int fd);
 	inline void DataSync(int fd);
@@ -54,7 +54,7 @@ public:
 	int fd;
 	uint64_t pos;
 	void *buf;			//iovec
-	size_t size;		//iov_cnt
+	size_t size;		//iobuf_cnt
 
 	ssize_t ret;
 	int error;			//错误码
@@ -79,22 +79,22 @@ void Command::Write(int fd, uint64_t pos, void *buf, size_t size)
 {
 	Set(CMD_PWRITE, fd, pos, buf, size);
 }
-void Command::Read(int fd, iovec *iov, int iovcnt)
+void Command::Read(int fd, iovec *iobuf, int iovcnt)
 {
-	Set(CMD_READV, fd, iov, iovcnt);
+	Set(CMD_READV, fd, iobuf, iovcnt);
 }
-void Command::Write(int fd, iovec *iov, int iovcnt)
+void Command::Write(int fd, iovec *iobuf, int iovcnt)
 {
-	Set(CMD_WRITEV, fd, iov, iovcnt);
+	Set(CMD_WRITEV, fd, iobuf, iovcnt);
 
 }
-void Command::Read(int fd, uint64_t pos, iovec *iov, int iovcnt)
+void Command::Read(int fd, uint64_t pos, iovec *iobuf, int iovcnt)
 {
-	Set(CMD_PREADV, fd, pos, iov, iovcnt);
+	Set(CMD_PREADV, fd, pos, iobuf, iovcnt);
 }
-void Command::Write(int fd, uint64_t pos, iovec *iov, int iovcnt)
+void Command::Write(int fd, uint64_t pos, iovec *iobuf, int iovcnt)
 {
-	Set(CMD_PWRITEV, fd, pos, iov, iovcnt);
+	Set(CMD_PWRITEV, fd, pos, iobuf, iovcnt);
 }
 void Command::ReadAhead(int fd, uint64_t pos, size_t size)
 {

@@ -30,7 +30,7 @@ typedef void (*PackStructCallback)(Packer&, void* arg);
 class Packer
 {
 public:
-    Packer(BufferPoolPtr& buf_list);
+    Packer(BlockBufferPtr& block_buf);
 
 public:
     void Pack(bool v)
@@ -85,14 +85,14 @@ public:
     }
     
 public:
-    BufferPoolPtr& GetBlockBufferPool()
+    BlockBufferPtr& GetBlockBuffer()
     {
-        return m_block_buffer_pool;
+        return m_block_buffer;
     }
 
 private:
-    BufferPoolPtr m_block_buffer_pool;
-    BufferItem* m_block_buf;          //当前正在写的buf
+    BlockBufferPtr m_block_buffer;
+    Block* m_block;                 //当前正在写的block
     byte_t* m_ptr;
 
 private:

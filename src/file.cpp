@@ -76,12 +76,12 @@ int64_t File::Read(void* buf, size_t buf_size) const
     }
     return rs;
 }
-int64_t File::Read(iovec_t* iov, int iov_cnt) const
+int64_t File::Read(iobuf_t* iobuf, int iobuf_cnt) const
 {
-    ssize_t rs = readv(m_fid, iov, iov_cnt);
+    ssize_t rs = readv(m_fid, iobuf, iobuf_cnt);
     while(rs == -1 && LastError == EINTR)
     {
-        rs = readv(m_fid, iov, iov_cnt);
+        rs = readv(m_fid, iobuf, iobuf_cnt);
     }
     return rs;
 }
@@ -94,12 +94,12 @@ int64_t File::Read(uint64_t offset, void* buf, size_t buf_size) const
     }
     return rs;
 }
-int64_t File::Read(uint64_t offset, iovec_t* iov, int iov_cnt) const
+int64_t File::Read(uint64_t offset, iobuf_t* iobuf, int iobuf_cnt) const
 {
-    ssize_t rs = preadv(m_fid, iov, iov_cnt, offset);
+    ssize_t rs = preadv(m_fid, iobuf, iobuf_cnt, offset);
     while(rs == -1 && LastError == EINTR)
     {
-        rs = preadv(m_fid, iov, iov_cnt, offset);
+        rs = preadv(m_fid, iobuf, iobuf_cnt, offset);
     }
     return rs;
 }
@@ -113,12 +113,12 @@ int64_t File::Write(const void* buf, size_t buf_size)
     }
     return ws;
 }
-int64_t File::Write(iovec_t* iov, int iov_cnt)
+int64_t File::Write(iobuf_t* iobuf, int iobuf_cnt)
 {
-    ssize_t ws = writev(m_fid, iov, iov_cnt);
+    ssize_t ws = writev(m_fid, iobuf, iobuf_cnt);
     while(ws == -1 && LastError == EINTR)
     {
-        ws = writev(m_fid, iov, iov_cnt);
+        ws = writev(m_fid, iobuf, iobuf_cnt);
     }
     return ws;
 }	
@@ -132,12 +132,12 @@ int64_t File::Write(uint64_t offset, const void* buf, size_t buf_size)
     return ws;
 }
 	
-int64_t File::Write(uint64_t offset, iovec_t* iov, int iov_cnt)
+int64_t File::Write(uint64_t offset, iobuf_t* iobuf, int iobuf_cnt)
 {
-    ssize_t ws = pwritev(m_fid, iov, iov_cnt, offset);
+    ssize_t ws = pwritev(m_fid, iobuf, iobuf_cnt, offset);
     while(ws == -1 && LastError == EINTR)
     {
-        ws = pwritev(m_fid, iov, iov_cnt, offset);
+        ws = pwritev(m_fid, iobuf, iobuf_cnt, offset);
     }
     return ws;
 }    
