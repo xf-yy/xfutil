@@ -56,6 +56,25 @@ uint32_t Hash32(const byte_t* data, size_t len, uint32_t seed)
 }
 
 
+uint32_t Hash32(uint32_t value, uint32_t seed)
+{
+	uint32_t h = seed * sizeof(uint32_t);
+	h += value;
+	h *= seed;
+	return h;
+}
+
+uint32_t Hash32(uint64_t value, uint32_t seed)
+{
+	uint32_t h = seed * sizeof(uint64_t);
+	h += value & 0xFFFFFFFF;
+	h *= seed;
+
+	h += (uint32_t)(value >> 32);
+	h *= seed;
+
+	return h;
+}
 
 }
 

@@ -24,6 +24,9 @@ namespace xfutil
 
 uint32_t Hash32(const byte_t* data, size_t len, uint32_t seed = 4118054813);
 
+uint32_t Hash32(uint32_t value, uint32_t seed = 4118054813);
+uint32_t Hash32(uint64_t value, uint32_t seed = 4118054813);
+
 }
 
 #endif
