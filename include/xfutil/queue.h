@@ -57,6 +57,19 @@ public:
         m_queue.push_back(v);
         m_not_empty_cond.notify_one();	
 	}
+
+	//只有数量限制
+	void PushFront(const T& v)
+	{
+		std::unique_lock<std::mutex> lock(m_mutex);
+		while(m_queue.size() >= m_capacity)
+		{
+			m_not_full_cond.wait(lock);
+		}
+        m_queue.push_front(v);
+        m_not_empty_cond.notify_one();	
+	}
+
 	//只有数量限制
 	bool Push(const T& v, uint32_t timeout_ms)
 	{
@@ -137,6 +150,7 @@ private:
     BlockingQueue<T>& operator=(const BlockingQueue<T>& other) = delete;
 		
 };
+
 
 }
 

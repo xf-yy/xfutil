@@ -26,7 +26,7 @@ limitations under the License.
 namespace xfutil
 {
 
-struct MemoryPoolNode;
+struct MemoryBlockHead;
 
 //小块内存池<4KB
 class MemoryPool
@@ -48,32 +48,34 @@ public:
 	void Free(byte_t* element);
 
     //已分配的块空间大小
-    uint64_t AllocatedBlockSize()
+    uint64_t MaxUsedSize()
     {
-        return m_allocated_block_size;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_blocks.size() * m_block_pool.BlockSize() + (uint64_t)m_element_size * m_cache_num;
     }
     //
-    uint64_t AllocatedSize()
+    uint64_t UsedCount()
     {
-        return m_allocated_size;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_used_cnt;
     }    
 
 private:
-    MemoryPoolNode* GetFreeBlockHead();
-    MemoryPoolNode* FindBlockHead(byte_t* ptr);
+    MemoryBlockHead* GetFreeMemoryBlock();
+    MemoryBlockHead* FindMemoryBlock(byte_t* ptr);
     
-    void RemoveBlockHead(MemoryPoolNode* head);
-    void AddBlockHead(MemoryPoolNode* head);
+    void RemoveMemoryBlock(MemoryBlockHead* head);
+    void AddMemoryBlock(MemoryBlockHead* head);
 
 private:
     BlockPool& m_block_pool;
 
     std::mutex m_mutex;
-    uint64_t m_allocated_block_size;
-    uint64_t m_allocated_size;
+    uint64_t m_used_cnt;
 
+    uint32_t m_cache_num;
     uint32_t m_element_size;
-    MemoryPoolNode* m_cache_block_head;
+    MemoryBlockHead* m_cache_block_head;
     byte_t* m_cache_block_end;
 
     List m_free_list;

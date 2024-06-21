@@ -1,5 +1,5 @@
 #include <fcntl.h>
-
+#include <sys/uio.h>
 #include "xfutil/aio.h"
 #include "xfutil/thread.h"
 #include "xfutil/queue.h"

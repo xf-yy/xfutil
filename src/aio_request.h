@@ -3,7 +3,7 @@
 
 #include <atomic>
 #include <vector>
-#include "xfutil/aio_cmd.h"
+#include "xfutil/aio.h"
 
 namespace xfutil
 {

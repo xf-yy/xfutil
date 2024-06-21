@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ***************************************************************************/
 
-#ifndef __xfutil_memory_pool_node_h__
-#define __xfutil_memory_pool_node_h__
+#ifndef __xfutil_memory_block_h__
+#define __xfutil_memory_block_h__
 
 #include <deque>
 #include "xfutil.h"
@@ -24,31 +24,31 @@ limitations under the License.
 namespace xfutil
 {
 
-struct MemoryPoolNode
+struct MemoryBlockHead
 {
     ListNode node;
 
     uint32_t block_size;
     uint32_t element_size;
-    uint32_t max_element_num;
-    uint32_t allocated_element_num;
+    uint16_t max_element_num;
+    uint16_t element_used_cnt;
     uint32_t next_element_offset;
     byte_t* next_element_ptr;
 };
 
 //初始化
-void MemoryPoolInit(MemoryPoolNode* mem, uint32_t block_size, uint32_t element_size);
+void MemoryBlockInit(MemoryBlockHead* block, uint32_t block_size, uint32_t element_size);
 
 //失败时返回nullptr
-byte_t* MemoryPoolAlloc(MemoryPoolNode* mem);
+byte_t* MemoryAlloc(MemoryBlockHead* block);
 
 //0: 可用数量从0->1，1：可用数量变满，其他返回-1
-int MemoryPoolFree(MemoryPoolNode* mem, byte_t* element);
+int MemoryFree(MemoryBlockHead* block, byte_t* element);
 
 //返回已使用的元素数量
-inline uint32_t MemoryPoolAllocatedSize(MemoryPoolNode* mem)
+inline uint32_t MemoryUsedSize(MemoryBlockHead* block)
 {
-    return mem->allocated_element_num * mem->element_size;
+    return block->element_used_cnt * block->element_size;
 }
 
 }

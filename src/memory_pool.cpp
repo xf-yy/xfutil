@@ -16,7 +16,7 @@ limitations under the License.
 
 #include "xfutil.h"
 #include "xfutil/memory_pool.h"
-#include "memory_pool_node.h"
+#include "memory_block.h"
 
 namespace xfutil
 {
@@ -24,10 +24,10 @@ namespace xfutil
 MemoryPool::MemoryPool(BlockPool& block_pool) 
     : m_block_pool(block_pool)
 {		
-    m_allocated_block_size = 0;
-    m_allocated_size = 0;
+    m_used_cnt = 0;
 
     m_element_size = 0;
+    m_cache_num = 0;
     m_cache_block_head = nullptr;
     m_cache_block_end = nullptr;
 
@@ -51,42 +51,43 @@ bool MemoryPool::Init(uint32_t element_size, uint32_t cache_num)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
+    m_cache_num = cache_num;
     m_element_size = ALIGN_UP(element_size, sizeof(void*));
-    uint64_t total_size = (uint64_t)cache_num * m_element_size + sizeof(MemoryPoolNode);
+    uint64_t total_size = (uint64_t)cache_num * m_element_size + sizeof(MemoryBlockHead);
 
-    m_cache_block_head = (MemoryPoolNode*)xmalloc(total_size);
+    m_cache_block_head = (MemoryBlockHead*)xmalloc(total_size);
     if(m_cache_block_head == nullptr)
     {
         return false;
     }
     m_cache_block_end = (byte_t*)m_cache_block_head + total_size;
 
-    MemoryPoolInit(m_cache_block_head, total_size, m_element_size);
-    m_allocated_block_size += total_size;
+    MemoryBlockInit(m_cache_block_head, total_size, m_element_size);
 
     return true;
 }
 
 byte_t* MemoryPool::Alloc()
 {
-    MemoryPoolNode* head;
+    MemoryBlockHead* head;
     byte_t* ptr;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        ptr = MemoryPoolAlloc(m_cache_block_head);
+
+        ptr = MemoryAlloc(m_cache_block_head);
         if(ptr != nullptr)
         {
-            m_allocated_size += m_element_size;
+            ++m_used_cnt;
             return ptr;
         }
         //从block分配，如果失败，则重新分配一个block
-        head = GetFreeBlockHead();
+        head = GetFreeMemoryBlock();
         if(head != nullptr)
         {
-            ptr = MemoryPoolAlloc(head);
+            ptr = MemoryAlloc(head);
             if(ptr != nullptr)
             {
-                m_allocated_size += m_element_size;
+                ++m_used_cnt;
                 return ptr;
             }
             //移动到full 链表中
@@ -95,38 +96,39 @@ byte_t* MemoryPool::Alloc()
         }
     }
     //重新分配一个block
-    head = (MemoryPoolNode*)m_block_pool.Alloc();
-    MemoryPoolInit(head, m_block_pool.BlockSize(), m_element_size);
-    ptr = MemoryPoolAlloc(head);
+    head = (MemoryBlockHead*)m_block_pool.Alloc();
+    MemoryBlockInit(head, m_block_pool.BlockSize(), m_element_size);
+    ptr = MemoryAlloc(head);
 
     std::lock_guard<std::mutex> lock(m_mutex);
-    AddBlockHead(head);
-    m_allocated_block_size += m_block_pool.BlockSize();
-    m_allocated_size += m_element_size;
+
+    AddMemoryBlock(head);
+    ++m_used_cnt;
 
     return ptr;
 }
 
 void MemoryPool::Free(byte_t* element)
 {
-    MemoryPoolNode* head;
+    MemoryBlockHead* head;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
+
         if(element < m_cache_block_end && element >= (byte_t*)m_cache_block_head)
         {
-            MemoryPoolFree(m_cache_block_head, element);
-            m_allocated_size -= m_element_size;
+            MemoryFree(m_cache_block_head, element);
+            --m_used_cnt;
             return;
         }
 
         //根据element找到其head
-        head = FindBlockHead(element);
+        head = FindMemoryBlock(element);
         if(head == nullptr)
         {
             return;
         }
-        m_allocated_size -= m_element_size;
-        int ret = MemoryPoolFree(head, element);
+        --m_used_cnt;
+        int ret = MemoryFree(head, element);
         if(ret < 0)
         {
             return;
@@ -140,36 +142,35 @@ void MemoryPool::Free(byte_t* element)
         }
         else
         {
-            RemoveBlockHead(head);
-            m_allocated_block_size -= m_block_pool.BlockSize();
+            RemoveMemoryBlock(head);
         }
     }
     m_block_pool.Free((byte_t*)head);   
 }
 
-MemoryPoolNode* MemoryPool::GetFreeBlockHead()
+MemoryBlockHead* MemoryPool::GetFreeMemoryBlock()
 {
     if(ListEmtpy(&m_free_list))
     {
         return nullptr;
     }
     ListNode* node = ListHead(&m_free_list);
-    return container_of(node, MemoryPoolNode, node);
+    return container_of(node, MemoryBlockHead, node);
 }
 
-MemoryPoolNode* MemoryPool::FindBlockHead(byte_t* ptr)
+MemoryBlockHead* MemoryPool::FindMemoryBlock(byte_t* ptr)
 {
     auto it = m_blocks.upper_bound(ptr);
     if(it != m_blocks.end())
     {
-        return (MemoryPoolNode*)(*it - m_block_pool.BlockSize());
+        return (MemoryBlockHead*)(*it - m_block_pool.BlockSize());
     }
 
     assert(false);
     return nullptr;
 }
 
-void MemoryPool::RemoveBlockHead(MemoryPoolNode* head)
+void MemoryPool::RemoveMemoryBlock(MemoryBlockHead* head)
 {
     byte_t* end = (byte_t*)head + m_block_pool.BlockSize();
 
@@ -177,7 +178,7 @@ void MemoryPool::RemoveBlockHead(MemoryPoolNode* head)
     m_blocks.erase(end);
 } 
 
-void MemoryPool::AddBlockHead(MemoryPoolNode* head)
+void MemoryPool::AddMemoryBlock(MemoryBlockHead* head)
 {
     byte_t* end = (byte_t*)head + m_block_pool.BlockSize();
 

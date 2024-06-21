@@ -27,6 +27,7 @@ limitations under the License.
 #include "xfutil/directory.h"
 #include "xfutil/file.h"
 #include "xfutil/file_watcher.h"
+#include "xfutil/ini_file.h"
 #include "xfutil/hash.h"
 #include "xfutil/logger.h"
 #include "xfutil/lru_cache.h"

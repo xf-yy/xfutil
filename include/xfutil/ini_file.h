@@ -68,6 +68,7 @@ public:
 	//0成功，其他失败	
 	int Parse(const char* file_path);
 
+	//获取无名section
 	const IniSection* GetSection() const
 	{
 		return GetSection("");
